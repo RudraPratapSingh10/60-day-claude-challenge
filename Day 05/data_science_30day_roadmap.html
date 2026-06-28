@@ -1,0 +1,345 @@
+
+<style>
+  :root {
+    --purple-50: #EEEDFE; --purple-100: #CECBF6; --purple-600: #534AB7; --purple-800: #3C3489;
+    --teal-50: #E1F5EE; --teal-100: #9FE1CB; --teal-600: #0F6E56; --teal-800: #085041;
+    --amber-50: #FAEEDA; --amber-100: #FAC775; --amber-600: #854F0B; --amber-800: #633806;
+    --coral-50: #FAECE7; --coral-100: #F5C4B3; --coral-600: #993C1D; --coral-800: #712B13;
+    --blue-50: #E6F1FB; --blue-600: #185FA5; --blue-800: #0C447C;
+    --green-50: #EAF3DE; --green-600: #3B6D11; --green-800: #27500A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans, system-ui, sans-serif); }
+
+  .roadmap-wrap { padding: 1.5rem 0.5rem; }
+
+  .header-banner {
+    background: var(--purple-50);
+    border: 0.5px solid var(--purple-100);
+    border-radius: var(--border-radius-lg, 12px);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  }
+  .header-icon {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--purple-100);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--purple-800); font-size: 22px; flex-shrink: 0;
+  }
+  .header-text h1 { font-size: 18px; font-weight: 500; color: var(--purple-800); }
+  .header-text p { font-size: 13px; color: var(--purple-600); margin-top: 3px; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+  .stat-card {
+    background: var(--color-background-secondary, #f7f7f5);
+    border-radius: var(--border-radius-md, 8px);
+    padding: 0.85rem 1rem;
+    text-align: center;
+  }
+  .stat-card .num { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+  .stat-card .lbl { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+
+  .week-tabs { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .week-tab {
+    padding: 7px 18px; border-radius: 999px;
+    border: 0.5px solid var(--color-border-secondary, rgba(0,0,0,0.3));
+    background: transparent; cursor: pointer;
+    font-size: 13px; font-weight: 500; color: var(--color-text-secondary);
+    transition: all 0.15s;
+  }
+  .week-tab:hover { background: var(--color-background-secondary); }
+  .week-tab.active { background: var(--purple-50); border-color: var(--purple-600); color: var(--purple-800); }
+
+  .week-panel { display: none; }
+  .week-panel.visible { display: block; }
+
+  .milestone-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 14px; border-radius: 999px; font-size: 12px; font-weight: 500;
+    margin-bottom: 1rem;
+  }
+  .w1 .milestone-badge { background: var(--teal-50); color: var(--teal-800); }
+  .w2 .milestone-badge { background: var(--amber-50); color: var(--amber-800); }
+  .w3 .milestone-badge { background: var(--coral-50); color: var(--coral-800); }
+  .w4 .milestone-badge { background: var(--purple-50); color: var(--purple-800); }
+
+  .week-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 520px) { .week-grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--color-background-primary, #fff);
+    border: 0.5px solid var(--color-border-tertiary, rgba(0,0,0,0.15));
+    border-radius: var(--border-radius-lg, 12px);
+    padding: 1rem 1.1rem;
+  }
+  .card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .card-icon { font-size: 16px; }
+  .card-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+
+  .day-list { list-style: none; }
+  .day-list li {
+    font-size: 12.5px; color: var(--color-text-secondary);
+    padding: 5px 0; border-bottom: 0.5px solid var(--color-border-tertiary, rgba(0,0,0,0.1));
+    display: flex; gap: 8px; align-items: flex-start; line-height: 1.5;
+  }
+  .day-list li:last-child { border-bottom: none; }
+  .day-pill {
+    font-size: 10px; font-weight: 500; padding: 2px 6px; border-radius: 4px;
+    white-space: nowrap; flex-shrink: 0; margin-top: 1px;
+  }
+  .w1 .day-pill { background: var(--teal-50); color: var(--teal-600); }
+  .w2 .day-pill { background: var(--amber-50); color: var(--amber-600); }
+  .w3 .day-pill { background: var(--coral-50); color: var(--coral-600); }
+  .w4 .day-pill { background: var(--purple-50); color: var(--purple-600); }
+
+  .resource-list { list-style: none; }
+  .resource-list li {
+    font-size: 12.5px; padding: 5px 0;
+    border-bottom: 0.5px solid var(--color-border-tertiary, rgba(0,0,0,0.1));
+    display: flex; align-items: center; gap: 8px; line-height: 1.5; color: var(--color-text-secondary);
+  }
+  .resource-list li:last-child { border-bottom: none; }
+  .resource-list i { font-size: 14px; flex-shrink: 0; }
+
+  .project-card {
+    background: var(--color-background-primary, #fff);
+    border: 0.5px solid var(--color-border-tertiary, rgba(0,0,0,0.15));
+    border-radius: var(--border-radius-lg, 12px);
+    padding: 1rem 1.1rem;
+    margin-top: 12px;
+  }
+  .project-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .project-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; flex-shrink: 0; }
+  .w1 .project-num { background: var(--teal-50); color: var(--teal-800); }
+  .w2 .project-num { background: var(--amber-50); color: var(--amber-800); }
+  .w3 .project-num { background: var(--coral-50); color: var(--coral-800); }
+  .w4 .project-num { background: var(--purple-50); color: var(--purple-800); }
+  .project-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+  .project-desc { font-size: 12.5px; color: var(--color-text-secondary); line-height: 1.5; }
+
+  .outcome-banner {
+    background: var(--purple-50); border: 0.5px solid var(--purple-100);
+    border-radius: var(--border-radius-lg, 12px); padding: 1.2rem 1.4rem;
+    margin-top: 1.5rem; display: flex; gap: 12px; align-items: flex-start;
+  }
+  .outcome-icon { font-size: 22px; color: var(--purple-600); flex-shrink: 0; margin-top: 2px; }
+  .outcome-text h3 { font-size: 14px; font-weight: 500; color: var(--purple-800); margin-bottom: 6px; }
+  .outcome-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-size: 11.5px; padding: 3px 10px; border-radius: 999px;
+    background: var(--purple-100); color: var(--purple-800); font-weight: 500;
+  }
+
+  .ask-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 1.25rem; padding: 8px 18px;
+    border: 0.5px solid var(--color-border-secondary, rgba(0,0,0,0.3));
+    border-radius: var(--border-radius-md, 8px);
+    background: transparent; cursor: pointer; font-size: 13px;
+    color: var(--color-text-primary); transition: background 0.12s;
+  }
+  .ask-btn:hover { background: var(--color-background-secondary); }
+</style>
+
+<div class="roadmap-wrap" role="main">
+  <h2 class="sr-only">30-day data science learning roadmap for intermediate learners spending 1–2 hours daily</h2>
+
+  <div class="header-banner">
+    <div class="header-icon"><i class="ti ti-chart-dots-3" aria-hidden="true"></i></div>
+    <div class="header-text">
+      <h1>30-day data science roadmap</h1>
+      <p>Intermediate level &nbsp;·&nbsp; 1–2 hrs/day &nbsp;·&nbsp; Practical, project-driven</p>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="num">30</div><div class="lbl">Days</div></div>
+    <div class="stat-card"><div class="num">4</div><div class="lbl">Weeks</div></div>
+    <div class="stat-card"><div class="num">4</div><div class="lbl">Projects</div></div>
+    <div class="stat-card"><div class="num">~60</div><div class="lbl">Hours total</div></div>
+  </div>
+
+  <div class="week-tabs" role="tablist">
+    <button class="week-tab active" onclick="showWeek(1)" role="tab" aria-selected="true">Week 1</button>
+    <button class="week-tab" onclick="showWeek(2)" role="tab" aria-selected="false">Week 2</button>
+    <button class="week-tab" onclick="showWeek(3)" role="tab" aria-selected="false">Week 3</button>
+    <button class="week-tab" onclick="showWeek(4)" role="tab" aria-selected="false">Week 4</button>
+  </div>
+
+  <!-- WEEK 1 -->
+  <div class="week-panel w1 visible" id="panel-1">
+    <span class="milestone-badge"><i class="ti ti-target" aria-hidden="true"></i> Milestone — Python & data wrangling mastery</span>
+    <div class="week-grid">
+      <div class="card">
+        <div class="card-header"><i class="ti ti-calendar-week card-icon" aria-hidden="true" style="color:var(--teal-600)"></i><span class="card-title">Daily tasks</span></div>
+        <ul class="day-list">
+          <li><span class="day-pill">Day 1</span> Review NumPy arrays, indexing & broadcasting</li>
+          <li><span class="day-pill">Day 2</span> Pandas: DataFrames, read_csv, head/info/describe</li>
+          <li><span class="day-pill">Day 3</span> Data cleaning — nulls, duplicates, dtypes</li>
+          <li><span class="day-pill">Day 4</span> GroupBy, merge, pivot tables</li>
+          <li><span class="day-pill">Day 5</span> Matplotlib basics — line, bar, scatter</li>
+          <li><span class="day-pill">Day 6</span> Seaborn — heatmaps, pairplots, distributions</li>
+          <li><span class="day-pill">Day 7</span> Mini project + review weak areas</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><i class="ti ti-books card-icon" aria-hidden="true" style="color:var(--teal-600)"></i><span class="card-title">Resources</span></div>
+        <ul class="resource-list">
+          <li><i class="ti ti-player-play" style="color:var(--teal-600)"></i> Kaggle — Pandas micro-course (free)</li>
+          <li><i class="ti ti-player-play" style="color:var(--teal-600)"></i> NumPy docs quickstart tutorial</li>
+          <li><i class="ti ti-book" style="color:var(--teal-600)"></i> "Python for Data Analysis" — Wes McKinney (ch. 1–5)</li>
+          <li><i class="ti ti-database" style="color:var(--teal-600)"></i> Dataset: Titanic (Kaggle)</li>
+          <li><i class="ti ti-brand-youtube" style="color:var(--teal-600)"></i> Corey Schafer — Pandas playlist</li>
+        </ul>
+      </div>
+    </div>
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-num">P1</div>
+        <div class="project-name">Titanic data exploration report</div>
+      </div>
+      <div class="project-desc">Load the Titanic dataset, clean it, explore survival rates by gender/class/age, and produce 5 meaningful visualizations with written insights. Submit as a Jupyter notebook.</div>
+    </div>
+  </div>
+
+  <!-- WEEK 2 -->
+  <div class="week-panel w2" id="panel-2">
+    <span class="milestone-badge"><i class="ti ti-target" aria-hidden="true"></i> Milestone — Build & evaluate your first ML models</span>
+    <div class="week-grid">
+      <div class="card">
+        <div class="card-header"><i class="ti ti-calendar-week card-icon" aria-hidden="true" style="color:var(--amber-600)"></i><span class="card-title">Daily tasks</span></div>
+        <ul class="day-list">
+          <li><span class="day-pill">Day 8</span> ML fundamentals — supervised vs unsupervised</li>
+          <li><span class="day-pill">Day 9</span> Linear regression from scratch + scikit-learn</li>
+          <li><span class="day-pill">Day 10</span> Logistic regression & classification metrics</li>
+          <li><span class="day-pill">Day 11</span> Decision trees & Random Forest</li>
+          <li><span class="day-pill">Day 12</span> Train/test split, cross-validation, overfitting</li>
+          <li><span class="day-pill">Day 13</span> Feature engineering & encoding categoricals</li>
+          <li><span class="day-pill">Day 14</span> Model comparison + project day</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><i class="ti ti-books card-icon" aria-hidden="true" style="color:var(--amber-600)"></i><span class="card-title">Resources</span></div>
+        <ul class="resource-list">
+          <li><i class="ti ti-player-play" style="color:var(--amber-600)"></i> Kaggle — Intro to ML course (free)</li>
+          <li><i class="ti ti-player-play" style="color:var(--amber-600)"></i> StatQuest — ML fundamentals (YouTube)</li>
+          <li><i class="ti ti-book" style="color:var(--amber-600)"></i> Scikit-learn user guide (online docs)</li>
+          <li><i class="ti ti-database" style="color:var(--amber-600)"></i> Dataset: House Prices (Kaggle)</li>
+          <li><i class="ti ti-brand-youtube" style="color:var(--amber-600)"></i> Sentdex — scikit-learn series</li>
+        </ul>
+      </div>
+    </div>
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-num">P2</div>
+        <div class="project-name">House price prediction model</div>
+      </div>
+      <div class="project-desc">Use the Ames Housing dataset to predict sale prices. Engineer features, train linear regression and random forest models, compare RMSE scores, and write a 1-page summary of findings.</div>
+    </div>
+  </div>
+
+  <!-- WEEK 3 -->
+  <div class="week-panel w3" id="panel-3">
+    <span class="milestone-badge"><i class="ti ti-target" aria-hidden="true"></i> Milestone — EDA + advanced ML + real competition</span>
+    <div class="week-grid">
+      <div class="card">
+        <div class="card-header"><i class="ti ti-calendar-week card-icon" aria-hidden="true" style="color:var(--coral-600)"></i><span class="card-title">Daily tasks</span></div>
+        <ul class="day-list">
+          <li><span class="day-pill">Day 15</span> EDA deep-dive: outlier detection, correlations</li>
+          <li><span class="day-pill">Day 16</span> Hyperparameter tuning — GridSearchCV</li>
+          <li><span class="day-pill">Day 17</span> XGBoost / Gradient Boosting intro</li>
+          <li><span class="day-pill">Day 18</span> Pipelines in scikit-learn (end-to-end)</li>
+          <li><span class="day-pill">Day 19</span> Natural Language Processing basics — NLTK</li>
+          <li><span class="day-pill">Day 20</span> SQL for data science — joins, subqueries</li>
+          <li><span class="day-pill">Day 21</span> Kaggle competition submission day</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><i class="ti ti-books card-icon" aria-hidden="true" style="color:var(--coral-600)"></i><span class="card-title">Resources</span></div>
+        <ul class="resource-list">
+          <li><i class="ti ti-player-play" style="color:var(--coral-600)"></i> Kaggle — Intermediate ML course</li>
+          <li><i class="ti ti-player-play" style="color:var(--coral-600)"></i> XGBoost official docs & examples</li>
+          <li><i class="ti ti-book" style="color:var(--coral-600)"></i> Mode SQL Tutorial (free online)</li>
+          <li><i class="ti ti-database" style="color:var(--coral-600)"></i> Dataset: any active Kaggle competition</li>
+          <li><i class="ti ti-brand-youtube" style="color:var(--coral-600)"></i> Krish Naik — end-to-end ML projects</li>
+        </ul>
+      </div>
+    </div>
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-num">P3</div>
+        <div class="project-name">Kaggle competition entry</div>
+      </div>
+      <div class="project-desc">Enter a beginner-friendly Kaggle competition (e.g. Spaceship Titanic). Build a full scikit-learn pipeline, tune with GridSearchCV, submit predictions, and document your approach in a public notebook.</div>
+    </div>
+  </div>
+
+  <!-- WEEK 4 -->
+  <div class="week-panel w4" id="panel-4">
+    <span class="milestone-badge"><i class="ti ti-target" aria-hidden="true"></i> Milestone — Portfolio-ready capstone project</span>
+    <div class="week-grid">
+      <div class="card">
+        <div class="card-header"><i class="ti ti-calendar-week card-icon" aria-hidden="true" style="color:var(--purple-600)"></i><span class="card-title">Daily tasks</span></div>
+        <ul class="day-list">
+          <li><span class="day-pill">Day 22</span> Choose capstone topic & gather dataset</li>
+          <li><span class="day-pill">Day 23</span> Full EDA with business question framing</li>
+          <li><span class="day-pill">Day 24</span> Feature engineering + model training</li>
+          <li><span class="day-pill">Day 25</span> Model evaluation & error analysis</li>
+          <li><span class="day-pill">Day 26</span> Build a simple Streamlit dashboard</li>
+          <li><span class="day-pill">Day 27</span> Write project README + clean notebook</li>
+          <li><span class="day-pill">Day 28–30</span> Push to GitHub, share on LinkedIn, reflect</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><i class="ti ti-books card-icon" aria-hidden="true" style="color:var(--purple-600)"></i><span class="card-title">Resources</span></div>
+        <ul class="resource-list">
+          <li><i class="ti ti-player-play" style="color:var(--purple-600)"></i> Streamlit docs — Get started guide</li>
+          <li><i class="ti ti-player-play" style="color:var(--purple-600)"></i> "How to write a great data science README"</li>
+          <li><i class="ti ti-book" style="color:var(--purple-600)"></i> Towards Data Science (Medium publication)</li>
+          <li><i class="ti ti-database" style="color:var(--purple-600)"></i> UCI ML Repository or Kaggle datasets</li>
+          <li><i class="ti ti-brand-github" style="color:var(--purple-600)"></i> GitHub + nbviewer for sharing notebooks</li>
+        </ul>
+      </div>
+    </div>
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-num">P4</div>
+        <div class="project-name">Capstone — end-to-end data science project</div>
+      </div>
+      <div class="project-desc">Pick a real-world dataset you care about (sports, health, finance, etc.), answer a meaningful question with data, build a polished ML model, and deploy a Streamlit app. This is your portfolio centrepiece.</div>
+    </div>
+  </div>
+
+  <div class="outcome-banner">
+    <i class="ti ti-trophy outcome-icon" aria-hidden="true"></i>
+    <div class="outcome-text">
+      <h3>Final outcome — what you'll have after 30 days</h3>
+      <div class="outcome-chips">
+        <span class="chip">4 GitHub projects</span>
+        <span class="chip">Kaggle profile</span>
+        <span class="chip">Live Streamlit app</span>
+        <span class="chip">pandas & numpy fluency</span>
+        <span class="chip">scikit-learn pipelines</span>
+        <span class="chip">XGBoost experience</span>
+        <span class="chip">SQL basics</span>
+        <span class="chip">Portfolio-ready notebook</span>
+      </div>
+    </div>
+  </div>
+
+  <button class="ask-btn" onclick="sendPrompt('Can you give me a detailed daily schedule and study tips for my data science roadmap?')">
+    <i class="ti ti-message-circle" aria-hidden="true"></i> Get a detailed daily schedule ↗
+  </button>
+</div>
+
+<script>
+  function showWeek(n) {
+    document.querySelectorAll('.week-panel').forEach(p => p.classList.remove('visible'));
+    document.querySelectorAll('.week-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+    document.getElementById('panel-' + n).classList.add('visible');
+    const tabs = document.querySelectorAll('.week-tab');
+    tabs[n - 1].classList.add('active');
+    tabs[n - 1].setAttribute('aria-selected', 'true');
+  }
+</script>
