@@ -1,0 +1,317 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans, system-ui, sans-serif); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+.wrap { padding: 1.5rem 0.5rem; }
+
+.section-label {
+  font-size: 11px; font-weight: 500; letter-spacing: 0.06em;
+  color: var(--color-text-tertiary); text-transform: uppercase;
+  margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+}
+
+.card {
+  background: var(--color-background-primary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: 12px; padding: 1.1rem 1.25rem;
+  margin-bottom: 12px;
+}
+
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+@media (max-width: 500px) { .compare-grid { grid-template-columns: 1fr; } }
+
+.compare-card {
+  border-radius: 12px; padding: 1rem 1.1rem;
+  border: 0.5px solid var(--color-border-tertiary);
+}
+.compare-card.bad { background: #FCEBEB; border-color: #F7C1C1; }
+.compare-card.good { background: #EAF3DE; border-color: #C0DD97; border: 2px solid #97C459; }
+
+.compare-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.compare-header i { font-size: 16px; }
+.compare-header span { font-size: 13px; font-weight: 500; }
+.bad .compare-header span { color: #791F1F; }
+.good .compare-header span { color: #27500A; }
+
+.prompt-box {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px; line-height: 1.6;
+  border-radius: 8px; padding: 10px 12px;
+}
+.bad .prompt-box { background: #F7C1C1; color: #791F1F; }
+.good .prompt-box { background: #C0DD97; color: #173404; }
+
+.verdict { font-size: 11.5px; margin-top: 8px; line-height: 1.5; }
+.bad .verdict { color: #A32D2D; }
+.good .verdict { color: #3B6D11; }
+
+.template-card {
+  background: var(--color-background-primary);
+  border: 2px solid #B5D4F4;
+  border-radius: 12px; overflow: hidden; margin-bottom: 12px;
+}
+.template-header {
+  background: #E6F1FB; padding: 0.85rem 1.25rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.template-header-left { display: flex; align-items: center; gap: 8px; }
+.template-header-left i { font-size: 16px; color: #0C447C; }
+.template-header-left span { font-size: 13px; font-weight: 500; color: #0C447C; }
+.copy-btn {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; color: #185FA5; cursor: pointer;
+  padding: 5px 12px; border-radius: 6px;
+  border: 0.5px solid #85B7EB; background: transparent;
+  transition: background 0.12s;
+}
+.copy-btn:hover { background: #B5D4F4; }
+.copy-btn i { font-size: 13px; }
+
+.template-body { padding: 1rem 1.25rem; }
+.field-row { margin-bottom: 14px; }
+.field-label {
+  font-size: 11px; font-weight: 500; color: var(--color-text-secondary);
+  margin-bottom: 5px; display: flex; align-items: center; gap: 5px;
+}
+.field-label i { font-size: 13px; }
+.field-value {
+  font-family: var(--font-mono, monospace);
+  font-size: 12.5px; color: var(--color-text-primary);
+  background: var(--color-background-secondary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: 6px; padding: 7px 10px; line-height: 1.5;
+  display: flex; align-items: flex-start; gap: 8px;
+}
+.field-value .placeholder { color: var(--color-text-tertiary); font-style: italic; }
+.field-value .example { color: #185FA5; }
+
+.req-badge {
+  font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 500;
+  flex-shrink: 0; margin-top: 1px;
+}
+.req { background: #F5C4B3; color: #712B13; }
+.opt { background: #D3D1C7; color: #444441; }
+
+.divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 14px 0; }
+
+.context-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.context-pill {
+  border-radius: 8px; padding: 10px 12px;
+  border: 0.5px solid var(--color-border-tertiary);
+  background: var(--color-background-primary);
+}
+.context-pill .cp-icon { font-size: 18px; margin-bottom: 5px; }
+.context-pill .cp-label { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); }
+.context-pill .cp-why { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; line-height: 1.4; }
+
+.outcome-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary);
+  font-size: 12.5px;
+}
+.outcome-row:last-child { border-bottom: none; }
+.outcome-row i { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.outcome-row .ot { color: var(--color-text-secondary); }
+.outcome-row .ov { color: var(--color-text-primary); font-weight: 500; margin-left: auto; text-align: right; }
+
+.generate-btn {
+  width: 100%; padding: 11px;
+  background: #E6F1FB; border: 0.5px solid #85B7EB;
+  border-radius: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 500; color: #0C447C;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: background 0.12s; margin-top: 12px;
+}
+.generate-btn:hover { background: #B5D4F4; }
+
+.full-prompt {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px; line-height: 1.7; color: var(--color-text-primary);
+  background: var(--color-background-secondary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: 8px; padding: 12px 14px;
+  white-space: pre-wrap;
+}
+.full-prompt .keyword { color: #185FA5; font-weight: 500; }
+.full-prompt .value { color: #3B6D11; }
+</style>
+
+<div class="wrap">
+<h2 class="sr-only">Prompt template for generating a personalized 30-day learning roadmap — showing what bad vs good prompts look like, and a fill-in-the-blank template.</h2>
+
+<div class="section-label"><i class="ti ti-git-compare" aria-hidden="true"></i> Prompt A vs Prompt B — what changed?</div>
+<div class="compare-grid">
+  <div class="compare-card bad">
+    <div class="compare-header">
+      <i class="ti ti-circle-x" style="color:#A32D2D" aria-hidden="true"></i>
+      <span>Prompt A — generic</span>
+    </div>
+    <div class="prompt-box">Create a 30-day learning roadmap. Include weekly milestones, daily tasks, resources, projects, and final outcome.</div>
+    <div class="verdict">No context = generic output. Could be for anyone, so it's useful to no one in particular.</div>
+  </div>
+  <div class="compare-card good">
+    <div class="compare-header">
+      <i class="ti ti-circle-check" style="color:#3B6D11" aria-hidden="true"></i>
+      <span>Prompt B — personalized</span>
+    </div>
+    <div class="prompt-box">Create a 30-day roadmap.
+Context:
+- Role: Student
+- Skills: Basic C++, Python
+- Goal: Job-ready in Data Analytics
+- Time: 5 hrs/day
+- Level: Beginner
+- Style: Videos + Projects</div>
+    <div class="verdict">6 context variables = output tailored to your exact situation, skills, and career goal.</div>
+  </div>
+</div>
+
+<div class="section-label"><i class="ti ti-template" aria-hidden="true"></i> The roadmap prompt template — fill in your details</div>
+<div class="template-card">
+  <div class="template-header">
+    <div class="template-header-left">
+      <i class="ti ti-clipboard-text" aria-hidden="true"></i>
+      <span>Copy this template and fill in the blanks</span>
+    </div>
+    <button class="copy-btn" onclick="copyTemplate()" id="copybtn">
+      <i class="ti ti-copy" aria-hidden="true"></i> Copy
+    </button>
+  </div>
+  <div class="template-body">
+
+    <div class="field-row">
+      <div class="field-label"><i class="ti ti-bulb" aria-hidden="true"></i> Topic</div>
+      <div class="field-value">
+        <span class="req req-badge">Required</span>
+        <span>Create a 30-day learning roadmap for&nbsp;<span class="placeholder">[your topic — e.g. Data Analytics, Web Dev, UI/UX]</span></span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="field-row">
+      <div class="field-label"><i class="ti ti-user" aria-hidden="true"></i> Your role / current situation</div>
+      <div class="field-value">
+        <span class="req req-badge">Required</span>
+        <span class="placeholder">[Student / Working professional / Freelancer / Career switcher]</span>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field-label"><i class="ti ti-code" aria-hidden="true"></i> Current skills</div>
+      <div class="field-value">
+        <span class="req req-badge">Required</span>
+        <span class="placeholder">[List what you already know — e.g. Basic Python, Excel, no coding]</span>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field-label"><i class="ti ti-target" aria-hidden="true"></i> Specific goal</div>
+      <div class="field-value">
+        <span class="req req-badge">Required</span>
+        <span class="placeholder">[Job-ready / Pass an exam / Build a portfolio / Get an internship]</span>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field-label"><i class="ti ti-clock" aria-hidden="true"></i> Daily time available</div>
+      <div class="field-value">
+        <span class="req req-badge">Required</span>
+        <span class="placeholder">[30 mins / 1–2 hrs / 3–5 hrs per day]</span>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field-label"><i class="ti ti-stairs" aria-hidden="true"></i> Experience level</div>
+      <div class="field-value">
+        <span class="req req-badge">Required</span>
+        <span class="placeholder">[Complete beginner / Know a little / Intermediate]</span>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field-label"><i class="ti ti-player-play" aria-hidden="true"></i> Preferred learning style</div>
+      <div class="field-value">
+        <span class="opt req-badge">Optional</span>
+        <span class="placeholder">[Videos / Reading / Projects / Courses / Mix of all]</span>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field-label"><i class="ti ti-map-pin" aria-hidden="true"></i> Location / context</div>
+      <div class="field-value">
+        <span class="opt req-badge">Optional</span>
+        <span class="placeholder">[India / USA / looking for remote jobs / targeting specific companies]</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section-label"><i class="ti ti-eye" aria-hidden="true"></i> Full prompt preview — what to copy into Claude</div>
+<div class="full-prompt" id="fullprompt"><span class="keyword">Create a 30-day learning roadmap for</span> <span class="value">[YOUR TOPIC]</span>.
+
+<span class="keyword">Context:</span>
+- <span class="keyword">Current situation:</span> <span class="value">[Student / Professional / Career switcher]</span>
+- <span class="keyword">Current skills:</span> <span class="value">[What you already know]</span>
+- <span class="keyword">Goal:</span> <span class="value">[What job-ready outcome you want]</span>
+- <span class="keyword">Available time:</span> <span class="value">[X hours per day]</span>
+- <span class="keyword">Experience level:</span> <span class="value">[Beginner / Intermediate]</span>
+- <span class="keyword">Learning style:</span> <span class="value">[Videos / Projects / Reading]</span>
+- <span class="keyword">Location:</span> <span class="value">[Your country or job market]</span>  ← optional but powerful
+
+<span class="keyword">Include:</span>
+- Weekly milestones
+- Daily tasks with time blocks
+- Free resources (videos + tools)
+- Hands-on projects for each week
+- Final outcome and portfolio plan
+
+Make it practical and beginner-friendly.</div>
+
+<div class="section-label" style="margin-top:1.25rem"><i class="ti ti-info-circle" aria-hidden="true"></i> Why each context variable matters</div>
+<div class="card">
+  <div class="outcome-row"><i class="ti ti-user" style="color:#185FA5" aria-hidden="true"></i><span class="ot">Your role</span><span class="ov">Sets pace, budget & goal type</span></div>
+  <div class="outcome-row"><i class="ti ti-code" style="color:#3B6D11" aria-hidden="true"></i><span class="ot">Current skills</span><span class="ov">Skips basics you already know</span></div>
+  <div class="outcome-row"><i class="ti ti-target" style="color:#993C1D" aria-hidden="true"></i><span class="ot">Specific goal</span><span class="ov">Shapes the final week's content</span></div>
+  <div class="outcome-row"><i class="ti ti-clock" style="color:#854F0B" aria-hidden="true"></i><span class="ot">Daily time</span><span class="ov">Creates realistic daily blocks</span></div>
+  <div class="outcome-row"><i class="ti ti-stairs" style="color:#534AB7" aria-hidden="true"></i><span class="ot">Experience level</span><span class="ov">Adjusts depth and speed</span></div>
+  <div class="outcome-row"><i class="ti ti-player-play" style="color:#0F6E56" aria-hidden="true"></i><span class="ot">Learning style</span><span class="ov">Picks right resource types</span></div>
+  <div class="outcome-row"><i class="ti ti-map-pin" style="color:#444441" aria-hidden="true"></i><span class="ot">Location</span><span class="ov">Uses locally relevant datasets & tools</span></div>
+</div>
+
+<button class="generate-btn" onclick="sendPrompt('Create a 30-day learning roadmap for [YOUR TOPIC]. Context: Current situation: [Student/Professional/Career switcher]. Current skills: [What you already know]. Goal: [Job-ready outcome]. Available time: [X hours per day]. Experience level: [Beginner/Intermediate]. Learning style: [Videos/Projects/Reading]. Location: [Your country]. Include: Weekly milestones, daily tasks with time blocks, free resources, hands-on projects for each week, final outcome and portfolio plan. Make it practical and beginner-friendly.')">
+  <i class="ti ti-wand" aria-hidden="true"></i> Generate my personalized roadmap ↗
+</button>
+
+</div>
+
+<script>
+function copyTemplate() {
+  const text = `Create a 30-day learning roadmap for [YOUR TOPIC].
+
+Context:
+- Current situation: [Student / Professional / Career switcher]
+- Current skills: [What you already know]
+- Goal: [What job-ready outcome you want]
+- Available time: [X hours per day]
+- Experience level: [Beginner / Intermediate]
+- Learning style: [Videos / Projects / Reading]
+- Location: [Your country or job market]
+
+Include:
+- Weekly milestones
+- Daily tasks with time blocks
+- Free resources (videos + tools)
+- Hands-on projects for each week
+- Final outcome and portfolio plan
+
+Make it practical and beginner-friendly.`;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copybtn');
+    btn.innerHTML = '<i class="ti ti-check" aria-hidden="true"></i> Copied!';
+    setTimeout(() => { btn.innerHTML = '<i class="ti ti-copy" aria-hidden="true"></i> Copy'; }, 2000);
+  });
+}
+</script>
