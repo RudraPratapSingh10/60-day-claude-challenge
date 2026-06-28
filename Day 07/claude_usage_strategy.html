@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Claude Usage Strategy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #11131a;
+    --surface: #181b24;
+    --surface-2: #1f2330;
+    --border: #2a2f3d;
+    --text: #ece9e1;
+    --text-dim: #8b90a3;
+    --text-faint: #565c70;
+
+    --haiku: #5fd9b7;
+    --sonnet: #e8a33d;
+    --opus: #a78bfa;
+
+    --dial-low: #5fd9b7;
+    --dial-standard: #e8a33d;
+    --dial-high: #e8843d;
+    --dial-max: #e1573f;
+
+    --font-display: 'Space Grotesk', system-ui, sans-serif;
+    --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(232,163,61,0.07), transparent 40%),
+      radial-gradient(circle at 85% 100%, rgba(167,139,250,0.06), transparent 40%);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap{
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* ---- terminal chrome header ---- */
+  .termbar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding: 14px 18px;
+    margin-top: 36px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px 10px 0 0;
+  }
+  .dot{ width:11px; height:11px; border-radius:50%; }
+  .dot.r{ background:#e1573f; }
+  .dot.y{ background:#e8a33d; }
+  .dot.g{ background:#5fd9b7; }
+  .termbar span{
+    margin-left: 12px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--text-faint);
+  }
+
+  .hero{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 14px 14px;
+    padding: 40px 36px 34px;
+  }
+
+  .prompt{
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--haiku);
+  }
+  .prompt::before{ content: "$ "; color: var(--text-faint); }
+  .cursor{
+    display:inline-block;
+    width:8px; height:16px;
+    background: var(--sonnet);
+    margin-left:6px;
+    vertical-align: -3px;
+    animation: blink 1.1s step-end infinite;
+  }
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  h1{
+    font-family: var(--font-display);
+    font-size: clamp(30px, 4vw, 42px);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 14px 0 18px;
+  }
+
+  .tags{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .tag{
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 5px 11px;
+    border-radius: 6px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+
+  section{
+    margin-top: 46px;
+  }
+
+  .label{
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-faint);
+    margin-bottom: 10px;
+  }
+
+  h2{
+    font-family: var(--font-display);
+    font-size: 23px;
+    font-weight: 600;
+    margin: 0 0 16px;
+    color: var(--text);
+  }
+
+  p{ color: var(--text-dim); margin: 0 0 12px; }
+  p:last-child{ margin-bottom:0; }
+
+  /* ---- primary model callout ---- */
+  .model-callout{
+    background: linear-gradient(135deg, rgba(232,163,61,0.12), rgba(232,163,61,0.02));
+    border: 1px solid rgba(232,163,61,0.35);
+    border-radius: 14px;
+    padding: 28px 30px;
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .model-callout .name{
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--sonnet);
+  }
+  .model-callout .sub{
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--text-dim);
+  }
+  .pill{
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--sonnet);
+    color: #1a1305;
+    font-weight: 600;
+  }
+
+  /* ---- model tier cards ---- */
+  .cards{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .card{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--tier-color);
+    border-radius: 10px;
+    padding: 18px 18px 20px;
+  }
+  .card .tier{
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--tier-color);
+    margin-bottom: 8px;
+  }
+  .card p{ font-size: 14px; margin:0; color: var(--text-dim); }
+  .card.haiku{ --tier-color: var(--haiku); }
+  .card.sonnet{ --tier-color: var(--sonnet); }
+  .card.opus{ --tier-color: var(--opus); }
+
+  /* ---- effort dial (signature element) ---- */
+  .dial{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 26px 24px;
+  }
+  .dial-track{
+    display:flex;
+    height: 10px;
+    border-radius: 999px;
+    overflow:hidden;
+    margin: 26px 0 10px;
+    background: var(--surface-2);
+  }
+  .dial-seg{ flex:1; }
+  .dial-seg.low{ background: var(--dial-low); }
+  .dial-seg.standard{ background: var(--dial-standard); }
+  .dial-seg.high{ background: var(--dial-high); }
+  .dial-seg.max{ background: var(--dial-max); }
+
+  .dial-labels{
+    display:flex;
+    position: relative;
+    margin-bottom: 28px;
+  }
+  .dial-labels .stop{ flex:1; text-align:center; position:relative; }
+  .dial-labels .stop span{
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+  .marker{
+    position:absolute;
+    top:-34px;
+    left:50%;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--sonnet);
+    white-space:nowrap;
+  }
+  .marker::after{
+    content:"";
+    display:block;
+    width:1px;
+    height:18px;
+    background: var(--sonnet);
+    margin: 4px auto 0;
+  }
+
+  .effort-grid{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-top: 8px;
+  }
+  .effort-item{
+    border-top: 2px solid var(--seg-color);
+    padding-top: 12px;
+  }
+  .effort-item.low{ --seg-color: var(--dial-low); }
+  .effort-item.standard{ --seg-color: var(--dial-standard); }
+  .effort-item.high{ --seg-color: var(--dial-high); }
+  .effort-item.max{ --seg-color: var(--dial-max); }
+  .effort-item h3{
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    color: var(--text);
+    margin: 0 0 6px;
+  }
+  .effort-item p{ font-size: 13.5px; }
+
+  /* ---- workflow table ---- */
+  .table-scroll{ overflow-x: auto; border-radius: 12px; }
+  table{
+    width:100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 13.5px;
+    min-width: 640px;
+  }
+  thead th{
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-faint);
+    text-align: left;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody td{
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+  tbody tr:last-child td{ border-bottom: none; }
+  tbody tr:hover{ background: var(--surface-2); }
+  .badge{
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 3px 9px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  .badge.haiku{ background: rgba(95,217,183,0.14); color: var(--haiku); }
+  .badge.sonnet{ background: rgba(232,163,61,0.14); color: var(--sonnet); }
+  .badge.opus{ background: rgba(167,139,250,0.14); color: var(--opus); }
+  td.task{ color: var(--text); font-weight: 500; }
+
+  /* ---- warning panel ---- */
+  .warn{
+    background: rgba(225,87,63,0.08);
+    border: 1px solid rgba(225,87,63,0.3);
+    border-radius: 12px;
+    padding: 22px 24px;
+  }
+  .warn .label{ color: var(--dial-max); }
+
+  /* ---- final callout ---- */
+  .final{
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 30px;
+  }
+  .final .result{
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--haiku);
+    margin-bottom: 10px;
+  }
+  .final .result::before{ content: "> "; color: var(--text-faint); }
+  .final strong{ color: var(--sonnet); }
+
+  footer{
+    margin-top: 50px;
+    text-align:center;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-faint);
+  }
+
+  @media (max-width: 680px){
+    .cards{ grid-template-columns: 1fr; }
+    .effort-grid{ grid-template-columns: 1fr 1fr; }
+    .hero{ padding: 30px 22px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="termbar">
+    <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+    <span>claude-strategy.md — read only</span>
+  </div>
+
+  <div class="hero">
+    <div class="prompt">whoami --profile<span class="cursor"></span></div>
+    <h1>My Claude Usage Strategy</h1>
+    <div class="tags">
+      <span class="tag">Student</span>
+      <span class="tag">Coding / Technical</span>
+      <span class="tag">Daily user</span>
+      <span class="tag">Fast Answers</span>
+      <span class="tag">Coding Help</span>
+      <span class="tag">Deep Research / Strategy</span>
+    </div>
+  </div>
+
+  <section>
+    <div class="label">Recommended Primary Model</div>
+    <div class="model-callout">
+      <div>
+        <div class="name">Claude Sonnet 4.6</div>
+        <div class="sub">your daily-driver model</div>
+      </div>
+      <div class="pill">DEFAULT</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Why This Model Fits Me</h2>
+    <p>You're a student coding daily, which means most of your requests are debugging, writing functions, understanding concepts, or quick checks — not research papers or month-long strategy documents. Sonnet 4.6 is built exactly for this: it's fast enough for daily back-and-forth, strong at code, and far cheaper than Opus on a student budget. You don't need Opus-level depth for 80% of what you described — you need a model you can keep open all day without it feeling slow or expensive.</p>
+  </section>
+
+  <section>
+    <div class="label">Model Tiers</div>
+    <div class="cards">
+      <div class="card haiku">
+        <div class="tier">When to Use Haiku</div>
+        <p>Reach for Haiku 4.5 when you just need a quick, low-stakes answer — syntax lookups, "what does this error mean," rewriting a sentence, a one-line explanation, or any task where speed matters more than depth. Think of it as your "Slack reply," not your "design doc."</p>
+      </div>
+      <div class="card sonnet">
+        <div class="tier">When to Use Sonnet</div>
+        <p>Sonnet 4.6 should be your default for nearly everything: writing and debugging code, explaining concepts while you study, drafting assignments, working through homework logic, and most daily Q&amp;A. It's the model you should leave selected unless you have a specific reason to switch.</p>
+      </div>
+      <div class="card opus">
+        <div class="tier">When to Use Opus</div>
+        <p>Switch to Opus (4.6, 4.7, or 4.8) when a task is genuinely hard or high-stakes: a multi-file refactor, a tricky algorithm or architecture decision, a research paper requiring synthesis across many sources, a business/strategy plan with real tradeoffs, or any project where being wrong is costly (a final submission, a thesis chapter, a real client deliverable). Don't use it for routine homework — that's overkill.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Recommended Effort Level</h2>
+    <p>Anthropic's effort dial controls how much internal reasoning a model does before answering — it trades thoroughness against speed and cost, and works the same way whether you're in claude.ai or the API. By default, Claude uses high effort, spending as many tokens as needed for excellent results.</p>
+
+    <div class="dial">
+      <div class="dial-track">
+        <div class="dial-seg low"></div>
+        <div class="dial-seg standard"></div>
+        <div class="dial-seg high"></div>
+        <div class="dial-seg max"></div>
+      </div>
+      <div class="dial-labels">
+        <div class="stop"><span>LOW</span></div>
+        <div class="stop"><div class="marker">YOU ARE HERE</div><span>STANDARD</span></div>
+        <div class="stop"><span>HIGH</span></div>
+        <div class="stop"><span>MAX</span></div>
+      </div>
+
+      <div class="effort-grid">
+        <div class="effort-item low">
+          <h3>Low</h3>
+          <p>Best for high-volume or latency-sensitive workloads — suitable for chat and non-coding use cases where faster turnaround is prioritized. Use this for quick factual lookups or simple rewrites.</p>
+        </div>
+        <div class="effort-item standard">
+          <h3>Standard (Medium/High)</h3>
+          <p>This is where you'll live most of the time. High effort is for complex reasoning and tasks where quality matters more than speed or cost — exactly your coding and learning sessions. It's also the default, so you usually don't need to touch anything.</p>
+        </div>
+        <div class="effort-item high">
+          <h3>High → "xhigh" (Opus)</h3>
+          <p>Step up here for serious coding sessions, agentic/multi-step tasks, or assignments with several moving parts where you want Claude to actually dig in rather than skim the surface.</p>
+        </div>
+        <div class="effort-item max">
+          <h3>Max</h3>
+          <p>For tasks requiring the absolute highest capability with no constraints on token spending. Reserve this for your hardest assignments, a thesis-level research synthesis, or a business plan you're betting real outcomes on — not everyday work.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>My Personalized Claude Workflow</h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Task</th><th>Best Model</th><th>Best Effort</th><th>Reason</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="task">Quick syntax/error lookup</td>
+            <td><span class="badge haiku">Haiku 4.5</span></td>
+            <td>Low</td>
+            <td>Trivial, speed &gt; depth</td>
+          </tr>
+          <tr>
+            <td class="task">Daily coding &amp; debugging</td>
+            <td><span class="badge sonnet">Sonnet 4.6</span></td>
+            <td>Standard (High)</td>
+            <td>Strong code quality, fast enough to use all day</td>
+          </tr>
+          <tr>
+            <td class="task">Studying / concept explanations</td>
+            <td><span class="badge sonnet">Sonnet 4.6</span></td>
+            <td>Standard</td>
+            <td>Clear explanations without overkill cost</td>
+          </tr>
+          <tr>
+            <td class="task">Homework / assignment drafts</td>
+            <td><span class="badge sonnet">Sonnet 4.6</span></td>
+            <td>Standard</td>
+            <td>Good balance of quality and speed</td>
+          </tr>
+          <tr>
+            <td class="task">Hard algorithm or architecture problem</td>
+            <td><span class="badge opus">Opus</span></td>
+            <td>High/xhigh</td>
+            <td>Needs deeper reasoning, fewer shortcuts</td>
+          </tr>
+          <tr>
+            <td class="task">Deep research synthesis (papers, comparisons)</td>
+            <td><span class="badge opus">Opus</span></td>
+            <td>High or Max</td>
+            <td>Quality and completeness matter more than cost here</td>
+          </tr>
+          <tr>
+            <td class="task">Major project / thesis-level work</td>
+            <td><span class="badge opus">Opus</span></td>
+            <td>Max</td>
+            <td>High stakes, worth the extra reasoning</td>
+          </tr>
+          <tr>
+            <td class="task">Casual quick questions</td>
+            <td><span class="badge haiku">Haiku 4.5</span></td>
+            <td>Low</td>
+            <td>No need for heavy reasoning</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="warn">
+      <div class="label">⚠ Biggest Mistakes I Should Avoid</div>
+      <p>Running everything on Opus "just to be safe" wastes both money and time — most of your daily coding and studying doesn't need that depth. The opposite mistake is just as common: defaulting to Max effort on simple tasks. It's not a quality guarantee — Max effort makes Claude try harder, not be right; on a question it would get wrong at High, it can still get wrong at Max, just more expensively and slower. Save Opus and Max for the moments that actually demand them — a hard bug, a real research task, a high-stakes deliverable — and let Sonnet at standard effort carry your daily load.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="final">
+      <h2>Final Recommendation</h2>
+      <div class="result">recommended_model.run()</div>
+      <p>If you could only pick one model and one effort level, go with <strong>Sonnet 4.6 at Standard (default/High) effort</strong>. It covers the overwhelming majority of a coding student's daily needs — fast enough for constant use, sharp enough for real coding and learning support — and you can occasionally borrow a single Opus/Max session for the rare hard problem without needing to live there.</p>
+    </div>
+  </section>
+
+  <footer>~/claude-usage-strategy · generated for daily-driver workflows</footer>
+
+</div>
+</body>
+</html>
