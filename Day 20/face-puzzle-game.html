@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Face Puzzle</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0d0d12;
+    --surface:#16161e;
+    --surface2:#1e1e28;
+    --border:#2e2e3e;
+    --accent:#7c6af7;
+    --accent2:#4fc3f7;
+    --correct:#22c55e;
+    --dragging:#f59e0b;
+    --text:#f0f0f5;
+    --muted:#888899;
+    --radius:14px;
+    --shadow:0 8px 32px rgba(0,0,0,0.45);
+  }
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Segoe UI',system-ui,sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:1.5rem 1rem 3rem;
+    overflow-x:hidden;
+  }
+  header{
+    text-align:center;
+    margin-bottom:2rem;
+    width:100%;
+  }
+  header h1{
+    font-size:clamp(1.6rem,4vw,2.4rem);
+    font-weight:800;
+    letter-spacing:-0.03em;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  header p{font-size:.85rem;color:var(--muted);margin-top:.3rem}
+
+  .screen{width:100%;max-width:520px;display:none;flex-direction:column;align-items:center;gap:1.25rem}
+  .screen.active{display:flex}
+
+  /* CARDS */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:1.5rem;
+    width:100%;
+    box-shadow:var(--shadow);
+  }
+
+  /* CAMERA */
+  #video-wrap{position:relative;width:100%;border-radius:12px;overflow:hidden;background:#000;aspect-ratio:4/3}
+  #video{width:100%;height:100%;object-fit:cover;display:block;transform:scaleX(-1)}
+  #canvas-snap{display:none}
+  #photo-preview{width:100%;border-radius:12px;object-fit:cover;display:block}
+  .cam-hint{font-size:.8rem;color:var(--muted);text-align:center}
+
+  /* BUTTONS */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:.4rem;
+    padding:.65rem 1.4rem;border-radius:10px;border:none;cursor:pointer;
+    font-size:.9rem;font-weight:600;transition:all .15s;
+    white-space:nowrap;
+  }
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{background:#6857e8;transform:translateY(-1px)}
+  .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+  .btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+  .btn-success{background:var(--correct);color:#fff}
+  .btn-danger{background:#ef4444;color:#fff}
+  .btn:active{transform:scale(.97)}
+  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+  .btn-row{display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center;width:100%}
+
+  /* DIFFICULTY */
+  .diff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;width:100%}
+  .diff-btn{
+    padding:1rem .5rem;border-radius:12px;border:2px solid var(--border);
+    background:var(--surface2);cursor:pointer;text-align:center;
+    color:var(--text);transition:all .15s;
+  }
+  .diff-btn:hover,.diff-btn.selected{border-color:var(--accent);background:rgba(124,106,247,.12)}
+  .diff-btn .diff-label{font-size:1.1rem;font-weight:700}
+  .diff-btn .diff-sub{font-size:.72rem;color:var(--muted);margin-top:.25rem}
+
+  /* STATS BAR */
+  .stats-bar{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;width:100%;
+  }
+  .stat{
+    background:var(--surface);border:1px solid var(--border);border-radius:10px;
+    padding:.6rem .75rem;text-align:center;
+  }
+  .stat-val{font-size:1.15rem;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent2)}
+  .stat-lbl{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:.15rem}
+
+  /* PUZZLE GRID */
+  #puzzle-container{
+    position:relative;width:100%;max-width:440px;
+    aspect-ratio:1;
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-radius:12px;
+    overflow:hidden;
+    touch-action:none;
+    user-select:none;
+  }
+  .puzzle-cell{
+    position:absolute;
+    cursor:grab;
+    transition:box-shadow .1s;
+    border:2px solid rgba(255,255,255,.06);
+  }
+  .puzzle-cell:active{cursor:grabbing}
+  .puzzle-cell.dragging{
+    opacity:.85;
+    border:2.5px solid var(--dragging);
+    box-shadow:0 8px 24px rgba(0,0,0,.5);
+    z-index:999;
+    transition:none;
+  }
+  .puzzle-cell.correct{border:2.5px solid var(--correct)}
+  .puzzle-cell canvas{display:block;width:100%;height:100%;pointer-events:none}
+
+  /* GHOST OVERLAY while dragging */
+  #drag-ghost{
+    position:fixed;pointer-events:none;z-index:1000;
+    border:2.5px solid var(--dragging);
+    box-shadow:0 8px 28px rgba(0,0,0,.55);
+    border-radius:4px;
+    display:none;
+  }
+  #drag-ghost canvas{display:block}
+
+  /* WIN OVERLAY */
+  #win-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.82);
+    display:none;align-items:center;justify-content:center;
+    z-index:2000;padding:1rem;
+    backdrop-filter:blur(6px);
+  }
+  #win-overlay.show{display:flex}
+  .win-card{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:20px;padding:2rem 1.75rem;
+    width:100%;max-width:400px;text-align:center;
+    box-shadow:0 24px 64px rgba(0,0,0,.7);
+  }
+  .win-trophy{font-size:3.5rem;margin-bottom:.75rem}
+  .win-card h2{font-size:1.6rem;font-weight:800;margin-bottom:1.25rem;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .win-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:1.5rem}
+  .win-stat{background:var(--surface2);border-radius:10px;padding:.7rem .5rem}
+  .win-stat-val{font-size:1.2rem;font-weight:700;color:var(--accent2)}
+  .win-stat-lbl{font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-top:.2rem}
+
+  /* LEADERBOARD */
+  .lb-title{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.75rem;text-align:left}
+  .lb-table{width:100%;border-collapse:collapse;font-size:.8rem}
+  .lb-table th{color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-size:.68rem;padding:.35rem .5rem;border-bottom:1px solid var(--border);text-align:left}
+  .lb-table td{padding:.45rem .5rem;border-bottom:1px solid rgba(255,255,255,.04)}
+  .lb-table tr:last-child td{border-bottom:none}
+  .lb-rank{font-weight:700;color:var(--accent)}
+  .lb-empty{color:var(--muted);font-size:.8rem;text-align:center;padding:1rem 0}
+
+  /* PROGRESS BAR */
+  .progress-wrap{width:100%;background:var(--surface2);border-radius:99px;height:6px;overflow:hidden}
+  .progress-bar{height:6px;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .3s}
+
+  /* PERMISSION ERROR */
+  .error-box{
+    background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
+    border-radius:10px;padding:1rem;font-size:.85rem;color:#fca5a5;text-align:center;
+    display:none;
+  }
+  .error-box.show{display:block}
+
+  /* PHOTO CHOICE */
+  #photo-wrap{width:100%;position:relative}
+  #photo-canvas{width:100%;border-radius:12px;display:block}
+  .photo-overlay{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.45);border-radius:12px;
+    opacity:0;transition:opacity .2s;
+    pointer-events:none;
+  }
+  #photo-wrap:hover .photo-overlay{opacity:1;pointer-events:auto}
+
+  @media(max-width:420px){
+    .stats-bar{grid-template-columns:repeat(3,1fr);gap:.35rem}
+    .stat-val{font-size:1rem}
+    .win-stats{grid-template-columns:repeat(3,1fr)}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Face Puzzle</h1>
+  <p>Snap your face — scramble it — solve it.</p>
+</header>
+
+<!-- SCREEN 1: CAMERA -->
+<div id="screen-camera" class="screen active">
+  <div class="card">
+    <div id="video-wrap">
+      <video id="video" autoplay playsinline muted></video>
+    </div>
+    <div id="cam-error" class="error-box" style="margin-top:.75rem">
+      Camera access denied or unavailable. Please allow camera permissions in your browser and reload.
+    </div>
+    <p class="cam-hint" style="margin-top:.6rem">Position your face in the frame and take a photo.</p>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" id="btn-snap" disabled>📸 Take Photo</button>
+  </div>
+  <canvas id="canvas-snap"></canvas>
+</div>
+
+<!-- SCREEN 2: DIFFICULTY -->
+<div id="screen-difficulty" class="screen">
+  <div id="photo-wrap" class="card" style="padding:0;overflow:hidden">
+    <img id="photo-preview" alt="Your captured photo">
+    <div class="photo-overlay">
+      <button class="btn btn-secondary" id="btn-retake-diff">↩ Retake</button>
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.9rem;font-weight:600">Choose difficulty</div>
+    <div class="diff-grid">
+      <button class="diff-btn" data-size="3">
+        <div class="diff-label">3 × 3</div>
+        <div class="diff-sub">9 pieces · Easy</div>
+      </button>
+      <button class="diff-btn selected" data-size="4">
+        <div class="diff-label">4 × 4</div>
+        <div class="diff-sub">16 pieces · Medium</div>
+      </button>
+      <button class="diff-btn" data-size="5">
+        <div class="diff-label">5 × 5</div>
+        <div class="diff-sub">25 pieces · Hard</div>
+      </button>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" id="btn-start">🧩 Start Puzzle</button>
+  </div>
+</div>
+
+<!-- SCREEN 3: PUZZLE -->
+<div id="screen-puzzle" class="screen">
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-val" id="stat-time">00:00.0</div><div class="stat-lbl">Time</div></div>
+    <div class="stat"><div class="stat-val" id="stat-moves">0</div><div class="stat-lbl">Moves</div></div>
+    <div class="stat"><div class="stat-val" id="stat-correct">0/0</div><div class="stat-lbl">Correct</div></div>
+  </div>
+  <div class="progress-wrap"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+  <div id="puzzle-container"></div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" id="btn-new-photo">📷 New Photo</button>
+    <button class="btn btn-secondary" id="btn-play-again">🔄 New Puzzle</button>
+  </div>
+</div>
+
+<!-- WIN OVERLAY -->
+<div id="win-overlay">
+  <div class="win-card">
+    <div class="win-trophy">🎉</div>
+    <h2>Puzzle Complete!</h2>
+    <div class="win-stats">
+      <div class="win-stat"><div class="win-stat-val" id="win-time">—</div><div class="win-stat-lbl">Time</div></div>
+      <div class="win-stat"><div class="win-stat-val" id="win-moves">—</div><div class="win-stat-lbl">Moves</div></div>
+      <div class="win-stat"><div class="win-stat-val" id="win-diff">—</div><div class="win-stat-lbl">Grid</div></div>
+    </div>
+    <div style="margin-bottom:1.25rem">
+      <div class="lb-title">🏆 Best Times</div>
+      <table class="lb-table" id="lb-table">
+        <thead><tr><th>#</th><th>Time</th><th>Moves</th><th>Grid</th><th>Date</th></tr></thead>
+        <tbody id="lb-body"></tbody>
+      </table>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-win-again">🔄 Play Again</button>
+      <button class="btn btn-secondary" id="btn-win-new">📷 New Photo</button>
+    </div>
+  </div>
+</div>
+
+<!-- DRAG GHOST -->
+<div id="drag-ghost"><canvas id="ghost-canvas"></canvas></div>
+
+<script>
+(function(){
+"use strict";
+
+// ── State ────────────────────────────────────────────────────────────────────
+let stream = null;
+let capturedImage = null;   // ImageBitmap
+let gridSize = 4;
+let pieces = [];             // [{id, correctIdx, currentIdx, canvas}]
+let timerInterval = null;
+let startTime = 0;
+let elapsedMs = 0;
+let moves = 0;
+let puzzleSize = 0;          // px side length of container
+let cellSize = 0;
+
+// ── DOM refs ─────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const video       = $('video');
+const canvasSnap  = $('canvas-snap');
+const btnSnap     = $('btn-snap');
+const camError    = $('cam-error');
+const photoPreview= $('photo-preview');
+const btnRetakeDiff= $('btn-retake-diff');
+const diffBtns    = document.querySelectorAll('.diff-btn');
+const btnStart    = $('btn-start');
+const puzzleContainer = $('puzzle-container');
+const statTime    = $('stat-time');
+const statMoves   = $('stat-moves');
+const statCorrect = $('stat-correct');
+const progressBar = $('progress-bar');
+const winOverlay  = $('win-overlay');
+const lbBody      = $('lb-body');
+const dragGhost   = $('drag-ghost');
+const ghostCanvas = $('ghost-canvas');
+
+// ── Screens ──────────────────────────────────────────────────────────────────
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $('screen-'+name).classList.add('active');
+}
+
+// ── Camera ───────────────────────────────────────────────────────────────────
+async function startCamera(){
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:'user',width:{ideal:1280},height:{ideal:960}},
+      audio:false
+    });
+    video.srcObject = stream;
+    video.play();
+    video.addEventListener('loadedmetadata',()=>{
+      btnSnap.disabled = false;
+    },{once:true});
+    camError.classList.remove('show');
+  }catch(e){
+    camError.classList.add('show');
+    console.warn('Camera error:',e);
+  }
+}
+
+function stopCamera(){
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
+}
+
+btnSnap.addEventListener('click',snapPhoto);
+$('btn-retake-diff').addEventListener('click',()=>{
+  capturedImage=null;
+  showScreen('camera');
+  startCamera();
+});
+$('btn-new-photo').addEventListener('click',()=>{
+  stopPuzzle();
+  capturedImage=null;
+  showScreen('camera');
+  startCamera();
+});
+$('btn-win-new').addEventListener('click',()=>{
+  winOverlay.classList.remove('show');
+  stopPuzzle();
+  capturedImage=null;
+  showScreen('camera');
+  startCamera();
+});
+
+async function snapPhoto(){
+  const w=video.videoWidth||640, h=video.videoHeight||480;
+  canvasSnap.width=w; canvasSnap.height=h;
+  const ctx=canvasSnap.getContext('2d');
+  ctx.save(); ctx.scale(-1,1); ctx.drawImage(video,0,0,-w,h); ctx.restore();
+  capturedImage = await createImageBitmap(canvasSnap);
+  photoPreview.src = canvasSnap.toDataURL('image/jpeg',0.95);
+  stopCamera();
+  showScreen('difficulty');
+}
+
+// ── Difficulty ────────────────────────────────────────────────────────────────
+diffBtns.forEach(b=>{
+  b.addEventListener('click',()=>{
+    diffBtns.forEach(x=>x.classList.remove('selected'));
+    b.classList.add('selected');
+    gridSize = parseInt(b.dataset.size,10);
+  });
+});
+
+btnStart.addEventListener('click',buildPuzzle);
+$('btn-play-again').addEventListener('click',buildPuzzle);
+$('btn-win-again').addEventListener('click',()=>{winOverlay.classList.remove('show');buildPuzzle()});
+
+// ── Puzzle build ──────────────────────────────────────────────────────────────
+function buildPuzzle(){
+  if(!capturedImage)return;
+  showScreen('puzzle');
+  winOverlay.classList.remove('show');
+  stopPuzzle();
+
+  // Size puzzle container to square fitting viewport
+  const maxW = Math.min(440, window.innerWidth - 32);
+  puzzleContainer.style.width  = maxW+'px';
+  puzzleContainer.style.height = maxW+'px';
+  puzzleSize = maxW;
+  cellSize   = puzzleSize / gridSize;
+
+  const n = gridSize * gridSize;
+  const imgW = capturedImage.width;
+  const imgH = capturedImage.height;
+  const side  = Math.min(imgW, imgH);
+  const offX  = (imgW - side) / 2;
+  const offY  = (imgH - side) / 2;
+  const sliceSize = side / gridSize;
+
+  // Create piece canvases
+  pieces = [];
+  for(let i=0;i<n;i++){
+    const pc = document.createElement('canvas');
+    pc.width = Math.ceil(cellSize * window.devicePixelRatio) || 80;
+    pc.height= pc.width;
+    const px = pc.getContext('2d');
+    const col = i%gridSize, row = Math.floor(i/gridSize);
+    px.drawImage(capturedImage,
+      offX+col*sliceSize, offY+row*sliceSize, sliceSize, sliceSize,
+      0, 0, pc.width, pc.height
+    );
+    pieces.push({id:i, correctIdx:i, currentIdx:i, canvas:pc});
+  }
+
+  // Shuffle (guarantee solvable via random swaps—even number preserves parity for grid puzzles)
+  const order = pieces.map((_,i)=>i);
+  for(let k=0;k<n*6;k++){
+    const a=Math.floor(Math.random()*n), b=Math.floor(Math.random()*n);
+    if(a!==b){[order[a],order[b]]=[order[b],order[a]]}
+  }
+  // Assign positions
+  order.forEach((pieceId,cellIdx)=>{
+    pieces[pieceId].currentIdx = cellIdx;
+  });
+  // Verify not already solved (reshuffle if so)
+  if(pieces.every(p=>p.currentIdx===p.correctIdx)) buildPuzzle();
+
+  renderPuzzle();
+  startTimer();
+  statMoves.textContent='0';
+  moves=0;
+  updateStats();
+}
+
+function renderPuzzle(){
+  puzzleContainer.innerHTML='';
+  pieces.forEach(p=>placePiece(p));
+}
+
+function placePiece(p){
+  const el = document.createElement('div');
+  el.className = 'puzzle-cell' + (p.currentIdx===p.correctIdx?' correct':'');
+  el.dataset.id = p.id;
+  el.style.width  = cellSize+'px';
+  el.style.height = cellSize+'px';
+  el.style.left   = (p.currentIdx%gridSize)*cellSize+'px';
+  el.style.top    = Math.floor(p.currentIdx/gridSize)*cellSize+'px';
+
+  const display = document.createElement('canvas');
+  display.width  = Math.round(cellSize);
+  display.height = Math.round(cellSize);
+  const ctx = display.getContext('2d');
+  ctx.drawImage(p.canvas, 0, 0, display.width, display.height);
+  el.appendChild(display);
+
+  puzzleContainer.appendChild(el);
+  attachDrag(el, p);
+}
+
+// ── Drag & Drop ───────────────────────────────────────────────────────────────
+let draggingPiece = null;
+let dragEl = null;
+let dragOffX=0, dragOffY=0;
+let ghostW=0, ghostH=0;
+
+function attachDrag(el, piece){
+  el.addEventListener('mousedown', e=>startDrag(e, el, piece));
+  el.addEventListener('touchstart', e=>startDrag(e, el, piece), {passive:false});
+}
+
+function startDrag(e, el, piece){
+  e.preventDefault();
+  draggingPiece = piece;
+  dragEl = el;
+  el.classList.add('dragging');
+
+  ghostW = cellSize; ghostH = cellSize;
+  ghostCanvas.width  = Math.round(cellSize * window.devicePixelRatio);
+  ghostCanvas.height = Math.round(cellSize * window.devicePixelRatio);
+  const gctx = ghostCanvas.getContext('2d');
+  gctx.drawImage(piece.canvas,0,0,ghostCanvas.width,ghostCanvas.height);
+  dragGhost.style.width  = ghostW+'px';
+  dragGhost.style.height = ghostH+'px';
+  dragGhost.style.display='block';
+  dragGhost.style.borderRadius='4px';
+
+  const pos = getClientPos(e);
+  dragOffX = ghostW/2; dragOffY = ghostH/2;
+  moveDragGhost(pos.x, pos.y);
+
+  document.addEventListener('mousemove', onDragMove);
+  document.addEventListener('mouseup',   onDragEnd);
+  document.addEventListener('touchmove', onDragMove, {passive:false});
+  document.addEventListener('touchend',  onDragEnd);
+}
+
+function getClientPos(e){
+  if(e.touches&&e.touches[0]) return {x:e.touches[0].clientX, y:e.touches[0].clientY};
+  return {x:e.clientX, y:e.clientY};
+}
+
+function moveDragGhost(cx,cy){
+  dragGhost.style.left = (cx - dragOffX)+'px';
+  dragGhost.style.top  = (cy - dragOffY)+'px';
+}
+
+function onDragMove(e){
+  e.preventDefault();
+  if(!draggingPiece)return;
+  const pos=getClientPos(e);
+  moveDragGhost(pos.x,pos.y);
+}
+
+function onDragEnd(e){
+  if(!draggingPiece){cleanup();return;}
+  const pos = getClientPos(e.changedTouches?{changedTouches:e.changedTouches}:e);
+  const rect = puzzleContainer.getBoundingClientRect();
+  const relX = pos.x - rect.left;
+  const relY = pos.y - rect.top;
+  const col  = Math.floor(relX/cellSize);
+  const row  = Math.floor(relY/cellSize);
+  const targetCellIdx = row*gridSize+col;
+
+  if(col>=0&&col<gridSize&&row>=0&&row<gridSize){
+    const targetPiece = pieces.find(p=>p.currentIdx===targetCellIdx);
+    if(targetPiece && targetPiece.id!==draggingPiece.id){
+      // swap
+      const tmp = draggingPiece.currentIdx;
+      draggingPiece.currentIdx = targetPiece.currentIdx;
+      targetPiece.currentIdx   = tmp;
+      moves++;
+      statMoves.textContent = moves;
+      renderPuzzle();
+      updateStats();
+      checkWin();
+    }else{
+      renderPuzzle(); // snap back
+    }
+  }else{
+    renderPuzzle();
+  }
+  cleanup();
+}
+
+function cleanup(){
+  draggingPiece=null;
+  dragEl=null;
+  dragGhost.style.display='none';
+  document.removeEventListener('mousemove',onDragMove);
+  document.removeEventListener('mouseup',onDragEnd);
+  document.removeEventListener('touchmove',onDragMove);
+  document.removeEventListener('touchend',onDragEnd);
+}
+
+// ── Stats & Timer ─────────────────────────────────────────────────────────────
+function startTimer(){
+  stopTimer();
+  startTime = Date.now();
+  elapsedMs = 0;
+  timerInterval = setInterval(()=>{
+    elapsedMs = Date.now()-startTime;
+    statTime.textContent = formatTime(elapsedMs);
+  },100);
+}
+
+function stopTimer(){
+  clearInterval(timerInterval);
+  timerInterval=null;
+}
+
+function stopPuzzle(){
+  stopTimer();
+  pieces=[];
+  puzzleContainer.innerHTML='';
+}
+
+function formatTime(ms){
+  const s=Math.floor(ms/1000);
+  const m=Math.floor(s/60);
+  const ss=s%60;
+  const t=Math.floor((ms%1000)/100);
+  return `${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}.${t}`;
+}
+
+function updateStats(){
+  const n=pieces.length;
+  const correct=pieces.filter(p=>p.currentIdx===p.correctIdx).length;
+  statCorrect.textContent=correct+'/'+n;
+  progressBar.style.width=(n?correct/n*100:0)+'%';
+}
+
+// ── Win detection ─────────────────────────────────────────────────────────────
+function checkWin(){
+  if(!pieces.length)return;
+  if(pieces.every(p=>p.currentIdx===p.correctIdx)){
+    stopTimer();
+    const finalTime=formatTime(elapsedMs);
+    const diff=gridSize+'×'+gridSize;
+    $('win-time').textContent=finalTime;
+    $('win-moves').textContent=moves;
+    $('win-diff').textContent=diff;
+    saveLeaderboard(finalTime,moves,diff);
+    renderLeaderboard();
+    winOverlay.classList.add('show');
+  }
+}
+
+// ── Leaderboard ───────────────────────────────────────────────────────────────
+const LB_KEY='face_puzzle_lb';
+
+function loadLeaderboard(){
+  try{return JSON.parse(localStorage.getItem(LB_KEY))||[];}catch{return [];}
+}
+
+function saveLeaderboard(time,mv,diff){
+  const entries=loadLeaderboard();
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  entries.push({time,moves:mv,diff,date:dateStr,ms:elapsedMs});
+  entries.sort((a,b)=>a.ms-b.ms);
+  entries.splice(5);
+  localStorage.setItem(LB_KEY,JSON.stringify(entries));
+}
+
+function renderLeaderboard(){
+  const entries=loadLeaderboard();
+  if(!entries.length){
+    lbBody.innerHTML='<tr><td colspan="5" class="lb-empty">No scores yet.</td></tr>';
+    return;
+  }
+  lbBody.innerHTML=entries.map((e,i)=>`
+    <tr>
+      <td class="lb-rank">#${i+1}</td>
+      <td>${e.time}</td>
+      <td>${e.moves}</td>
+      <td>${e.diff}</td>
+      <td>${e.date}</td>
+    </tr>`).join('');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+startCamera();
+
+})();
+</script>
+</body>
+</html>
