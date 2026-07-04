@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Shark Tank AI — Pitch Simulator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root{
+  --deep:#071B26;
+  --tank:#0D2733;
+  --panel:#123644;
+  --panel-2:#16404F;
+  --line:#1F5568;
+  --foam:#EAF6F6;
+  --dim:#8FB3BC;
+  --teal:#2DD4BF;
+  --teal-dim:#1B8577;
+  --gold:#E8B84B;
+  --red:#E2543D;
+  --green:#43B77E;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(ellipse at top, rgba(45,212,191,0.06), transparent 60%),
+    var(--deep);
+  color:var(--foam);
+  font-family:'Inter',sans-serif;
+  min-height:100vh;
+  padding:32px 20px 100px;
+}
+.wrap{max-width:1100px;margin:0 auto;}
+
+/* ---------- header ---------- */
+.masthead{
+  text-align:center;
+  margin-bottom:34px;
+}
+.masthead .kicker{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:var(--teal);
+  margin-bottom:8px;
+}
+.masthead h1{
+  font-family:'Anton',sans-serif;
+  font-weight:400;
+  letter-spacing:0.02em;
+  font-size:clamp(34px,6vw,58px);
+  margin:0;
+  color:var(--foam);
+  text-shadow:0 0 30px rgba(45,212,191,0.25);
+}
+.masthead p{
+  color:var(--dim);
+  font-size:14px;
+  margin-top:8px;
+}
+
+/* ---------- panels ---------- */
+.panel{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:28px;
+  margin-bottom:24px;
+  animation:rise .5s ease both;
+}
+@keyframes rise{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+
+.panel h2{
+  font-family:'Anton',sans-serif;
+  font-weight:400;
+  letter-spacing:0.01em;
+  font-size:22px;
+  margin:0 0 20px;
+  color:var(--teal);
+}
+
+label{
+  display:block;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--dim);
+  margin-bottom:6px;
+  margin-top:18px;
+  font-family:'IBM Plex Mono',monospace;
+}
+label:first-of-type{margin-top:0;}
+
+input[type=text], input[type=number], textarea, select{
+  width:100%;
+  background:var(--tank);
+  border:1px solid var(--line);
+  color:var(--foam);
+  padding:12px 14px;
+  border-radius:4px;
+  font-family:'Inter',sans-serif;
+  font-size:14px;
+  resize:vertical;
+}
+input:focus, textarea:focus, select:focus{
+  outline:2px solid var(--teal);
+  outline-offset:1px;
+  border-color:var(--teal);
+}
+textarea{min-height:60px;}
+
+.form-grid{display:grid; grid-template-columns:1fr; gap:0;}
+@media(min-width:760px){
+  .form-grid.two{grid-template-columns:1fr 1fr; column-gap:24px;}
+}
+
+button{
+  font-family:'IBM Plex Mono',monospace;
+  cursor:pointer;
+  border-radius:4px;
+  border:none;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+}
+.btn-primary{
+  background:var(--teal);
+  color:var(--deep);
+  font-weight:600;
+  padding:14px 22px;
+  font-size:13px;
+  width:100%;
+  margin-top:26px;
+  transition:background .15s ease, transform .1s ease;
+}
+.btn-primary:hover{background:#5CE8D6;}
+.btn-primary:active{transform:scale(0.99);}
+.btn-primary:disabled{opacity:0.4; cursor:default;}
+
+.btn-secondary{
+  background:transparent;
+  border:1px solid var(--line);
+  color:var(--dim);
+  padding:10px 16px;
+  font-size:12px;
+}
+.btn-secondary:hover{border-color:var(--teal); color:var(--teal);}
+
+.hidden{display:none !important;}
+
+/* ---------- pitch summary ---------- */
+.pitch-card{
+  background:var(--panel-2);
+  border-left:3px solid var(--gold);
+  border-radius:4px;
+  padding:20px 24px;
+  margin-bottom:20px;
+}
+.pitch-card .name{
+  font-family:'Anton',sans-serif;
+  font-size:24px;
+  color:var(--gold);
+}
+.pitch-card .ask{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:13px;
+  color:var(--teal);
+  margin-top:4px;
+}
+.pitch-card dl{display:grid; grid-template-columns:140px 1fr; gap:8px 14px; margin-top:16px; font-size:13px;}
+.pitch-card dt{color:var(--dim); font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.06em;}
+.pitch-card dd{margin:0; color:var(--foam);}
+
+/* ---------- judges ---------- */
+.judges-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:16px;
+}
+.judge-card{
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:18px;
+  transition:box-shadow .3s ease, border-color .3s ease;
+}
+.judge-card.active-glow{
+  border-color:var(--teal);
+  box-shadow:0 0 24px rgba(45,212,191,0.28);
+}
+.judge-card.lit-invest{border-color:var(--green); box-shadow:0 0 20px rgba(67,183,126,0.3);}
+.judge-card.lit-reject{border-color:var(--red); box-shadow:0 0 20px rgba(226,84,61,0.25); opacity:0.75;}
+
+.judge-emoji{font-size:30px; line-height:1;}
+.judge-name{font-family:'Anton',sans-serif; font-size:18px; margin-top:6px;}
+.judge-focus{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--teal); text-transform:uppercase; letter-spacing:0.06em; margin-top:2px;}
+
+/* ---------- Q&A ---------- */
+.qa-block{
+  margin-top:22px;
+  padding-top:18px;
+  border-top:1px solid var(--line);
+}
+.qa-question{
+  font-size:14px;
+  margin-bottom:10px;
+  line-height:1.5;
+}
+.qa-question .qnum{color:var(--gold); font-family:'IBM Plex Mono',monospace; font-size:11px; margin-right:6px;}
+.qa-reaction{
+  margin-top:10px;
+  font-size:13px;
+  color:var(--teal);
+  font-style:italic;
+  min-height:18px;
+}
+.progress-track{
+  height:5px; background:var(--tank); border-radius:3px; overflow:hidden; margin-bottom:22px;
+}
+.progress-fill{height:100%; background:var(--teal); width:0%; transition:width .4s ease;}
+.progress-label{
+  font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--dim); margin-bottom:6px;
+  display:flex; justify-content:space-between;
+}
+
+/* ---------- scorecard ---------- */
+.score-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:18px;
+  margin-top:6px;
+}
+.score-item .score-label{font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--dim); margin-bottom:6px;}
+.score-item .score-num{font-family:'Anton',sans-serif; font-size:30px; color:var(--foam);}
+.score-item .score-num span{font-size:14px; color:var(--dim); font-family:'IBM Plex Mono',monospace;}
+.score-bar-track{height:6px; background:var(--tank); border-radius:3px; overflow:hidden; margin-top:8px;}
+.score-bar-fill{height:100%; background:var(--teal); width:0%; transition:width 1s cubic-bezier(.2,.8,.2,1);}
+
+/* ---------- decision ---------- */
+.decision-banner{
+  text-align:center;
+  padding:34px 20px;
+  border-radius:8px;
+  margin-top:6px;
+  border:1px solid var(--line);
+}
+.decision-banner.invest{background:rgba(67,183,126,0.1); border-color:var(--green);}
+.decision-banner.acquire{background:rgba(232,184,75,0.1); border-color:var(--gold);}
+.decision-banner.comeback{background:rgba(45,212,191,0.08); border-color:var(--teal);}
+.decision-banner.reject{background:rgba(226,84,61,0.08); border-color:var(--red);}
+.decision-tag{font-family:'Anton',sans-serif; font-size:38px; letter-spacing:0.02em;}
+.decision-sub{font-family:'IBM Plex Mono',monospace; color:var(--dim); font-size:13px; margin-top:8px;}
+
+.deal-grid{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:16px; margin-top:24px;
+}
+.deal-item{
+  background:var(--tank); border:1px solid var(--line); border-radius:6px; padding:16px; text-align:center;
+}
+.deal-item .dlabel{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--dim); text-transform:uppercase; letter-spacing:0.06em;}
+.deal-item .dvalue{font-family:'Anton',sans-serif; font-size:22px; color:var(--gold); margin-top:6px;}
+
+.reasoning{
+  margin-top:22px;
+  background:var(--tank);
+  border-left:3px solid var(--teal);
+  border-radius:4px;
+  padding:16px 20px;
+  font-size:14px;
+  line-height:1.6;
+  color:var(--foam);
+}
+
+.action-row{
+  display:flex; flex-wrap:wrap; gap:12px; margin-top:24px;
+}
+.action-row button{flex:1; min-width:160px; padding:12px; font-size:12px;}
+
+/* ---------- leaderboard ---------- */
+table.leaderboard{
+  width:100%; border-collapse:collapse; margin-top:6px; font-size:13px;
+}
+table.leaderboard th, table.leaderboard td{
+  padding:10px 12px; text-align:left; border-bottom:1px solid var(--line);
+}
+table.leaderboard th{
+  font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.06em; color:var(--dim);
+}
+table.leaderboard td.rank{color:var(--gold); font-family:'Anton',sans-serif; font-size:15px;}
+.lb-empty{color:var(--dim); font-size:13px; font-family:'IBM Plex Mono',monospace; padding:10px 0;}
+.badge{
+  font-family:'IBM Plex Mono',monospace; font-size:10px; padding:2px 8px; border-radius:3px; text-transform:uppercase;
+}
+.badge.invest{background:rgba(67,183,126,0.18); color:var(--green);}
+.badge.acquire{background:rgba(232,184,75,0.18); color:var(--gold);}
+.badge.comeback{background:rgba(45,212,191,0.15); color:var(--teal);}
+.badge.reject{background:rgba(226,84,61,0.18); color:var(--red);}
+
+.footer-note{text-align:center; color:var(--dim); font-size:11px; font-family:'IBM Plex Mono',monospace; margin-top:40px;}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation:none !important; transition:none !important;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="kicker">AI Shark Tank · Live Pitch Simulator</div>
+    <h1>Into the Tank</h1>
+    <p>Four sharks. Eight questions. One decision.</p>
+  </div>
+
+  <!-- STEP 1: INPUT -->
+  <div class="panel" id="panel-input">
+    <h2>Your Pitch</h2>
+    <div class="form-grid two">
+      <div>
+        <label for="i-name">Startup name</label>
+        <input type="text" id="i-name" placeholder="e.g. Northlane">
+
+        <label for="i-problem">Problem statement</label>
+        <textarea id="i-problem" placeholder="What painful problem are you solving?"></textarea>
+
+        <label for="i-solution">Solution</label>
+        <textarea id="i-solution" placeholder="How does your product solve it?"></textarea>
+      </div>
+      <div>
+        <label for="i-revenue">Revenue model</label>
+        <select id="i-revenue">
+          <option value="">Choose one</option>
+          <option value="Subscription">Recurring subscription</option>
+          <option value="Transaction">Transaction / take-rate</option>
+          <option value="Usage-based">Usage-based</option>
+          <option value="Enterprise license">Enterprise license</option>
+          <option value="Advertising">Advertising</option>
+          <option value="Marketplace">Marketplace commission</option>
+          <option value="Unclear">Still figuring it out</option>
+        </select>
+
+        <label for="i-audience">Target audience</label>
+        <input type="text" id="i-audience" placeholder="Who exactly buys this?">
+
+        <label for="i-ask">Funding ask (USD) — for what % equity</label>
+        <div style="display:flex; gap:10px;">
+          <input type="number" id="i-ask" placeholder="e.g. 250000" min="0" style="flex:1;">
+          <input type="number" id="i-equity" placeholder="e.g. 10" min="0" max="100" style="width:100px;">
+        </div>
+      </div>
+    </div>
+    <button class="btn-primary" id="btn-submit-pitch">Enter the Tank</button>
+  </div>
+
+  <!-- STEP 2: PITCH ROUND -->
+  <div class="panel hidden" id="panel-pitch">
+    <h2>The Pitch</h2>
+    <div class="pitch-card" id="pitch-summary"></div>
+
+    <h2 style="margin-top:8px;">The Sharks</h2>
+    <div class="judges-grid" id="judges-grid"></div>
+
+    <div class="qa-block">
+      <div class="progress-label"><span id="q-progress-label">Question 1 of 8</span><span id="q-progress-pct">0%</span></div>
+      <div class="progress-track"><div class="progress-fill" id="q-progress-fill"></div></div>
+      <div class="qa-question" id="qa-question"></div>
+      <textarea id="qa-answer" placeholder="Answer the shark's question..."></textarea>
+      <div class="qa-reaction" id="qa-reaction"></div>
+      <button class="btn-primary" id="btn-answer">Answer</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: SCORECARD -->
+  <div class="panel hidden" id="panel-scorecard">
+    <h2>Startup Scorecard</h2>
+    <div class="score-grid" id="score-grid"></div>
+    <button class="btn-primary" id="btn-see-decision">Reveal Investment Decision</button>
+  </div>
+
+  <!-- STEP 4: DECISION -->
+  <div class="panel hidden" id="panel-decision">
+    <h2>The Verdict</h2>
+    <div class="decision-banner" id="decision-banner">
+      <div class="decision-tag" id="decision-tag"></div>
+      <div class="decision-sub" id="decision-sub"></div>
+    </div>
+    <div class="deal-grid" id="deal-grid"></div>
+    <div class="reasoning" id="decision-reasoning"></div>
+    <div class="action-row">
+      <button class="btn-secondary" id="btn-download-pdf">Download Pitch Report (PDF)</button>
+      <button class="btn-secondary" id="btn-share">Share Result</button>
+      <button class="btn-secondary" id="btn-restart">Pitch a New Startup</button>
+    </div>
+  </div>
+
+  <!-- STEP 5: LEADERBOARD -->
+  <div class="panel hidden" id="panel-leaderboard">
+    <h2>Leaderboard</h2>
+    <div id="leaderboard-empty" class="lb-empty">No pitches yet this session. Every pitch you run gets ranked here.</div>
+    <table class="leaderboard hidden" id="leaderboard-table">
+      <thead><tr><th>#</th><th>Startup</th><th>Decision</th><th>Score</th><th>Valuation</th></tr></thead>
+      <tbody id="leaderboard-body"></tbody>
+    </table>
+  </div>
+
+  <div class="footer-note">SIMULATED JUDGES · SCORES ARE HEURISTIC, NOT FINANCIAL ADVICE</div>
+</div>
+
+<script>
+/* ---------------- data ---------------- */
+const judges = [
+  { key:'vc', emoji:'🦈', name:'Marcus Chen', role:'Venture Capitalist', focus:'Market size & scalability',
+    weights:{market:0.55, innovation:0.15, business:0.15, execution:0.15},
+    questions:(f)=>[
+      `How big is the total addressable market for ${f.name}, and how fast is it growing?`,
+      `Walk me through how ${f.name} scales past your first thousand customers without linearly scaling costs.`
+    ],
+    reactions:{good:`Now that's the kind of ambition I fund.`, mid:`Reasonable, but I need bigger numbers.`, weak:`That market's smaller than my last exit's marketing budget.`}
+  },
+  { key:'founder', emoji:'🦈', name:'Priya Patel', role:'Founder', focus:'Execution',
+    weights:{market:0.1, innovation:0.2, business:0.15, execution:0.55},
+    questions:(f)=>[
+      `If I gave you a term sheet today, what ships in the next 90 days for ${f.name}?`,
+      `What's the single biggest execution risk that could sink this, and what's your plan for it?`
+    ],
+    reactions:{good:`You've clearly built things before. I respect that.`, mid:`You know what to do, you just haven't done it yet.`, weak:`That's a wish list, not a plan.`}
+  },
+  { key:'customer', emoji:'🦈', name:'Jordan Lee', role:'Customer', focus:'Usefulness',
+    weights:{market:0.1, innovation:0.45, business:0.15, execution:0.3},
+    questions:(f)=>[
+      `Why would I switch from what I use today to ${f.name}?`,
+      `What's the one thing your product does that genuinely nothing else does?`
+    ],
+    reactions:{good:`Okay, I'd actually use that.`, mid:`I might try it once, not sure I'd stay.`, weak:`I don't see why I'd change what I'm already doing.`}
+  },
+  { key:'angel', emoji:'🦈', name:'Elena Vasquez', role:'Angel Investor', focus:'Profitability',
+    weights:{market:0.15, innovation:0.1, business:0.6, execution:0.15},
+    questions:(f)=>[
+      `What does it cost you to acquire a customer, and what's that customer worth over time?`,
+      `Walk me through exactly how ${f.name} turns a dollar of revenue into a dollar of profit.`
+    ],
+    reactions:{good:`Those are numbers I can put in a spreadsheet and believe.`, mid:`The model works on a good day. What about a bad one?`, weak:`I don't invest in hope-based accounting.`}
+  }
+];
+
+let state = {};
+let leaderboard = [];
+
+/* ---------------- helpers ---------------- */
+function scoreText(t, weak, strong, base=15){
+  if(!t) return base;
+  const len = t.trim().length;
+  let score = Math.min(60, len/3);
+  const lower = t.toLowerCase();
+  weak.forEach(w=>{ if(lower.includes(w)) score -= 12; });
+  strong.forEach(w=>{ if(lower.includes(w)) score += 10; });
+  return Math.max(5, Math.min(95, Math.round(score)));
+}
+function clamp(n,lo,hi){return Math.max(lo,Math.min(hi,n));}
+function fmtUSD(n){
+  n = Math.round(n||0);
+  return '$' + n.toLocaleString();
+}
+
+/* ---------------- step 1: collect pitch ---------------- */
+document.getElementById('btn-submit-pitch').addEventListener('click', ()=>{
+  state.name = document.getElementById('i-name').value.trim() || 'Unnamed Startup';
+  state.problem = document.getElementById('i-problem').value.trim();
+  state.solution = document.getElementById('i-solution').value.trim();
+  state.revenue = document.getElementById('i-revenue').value;
+  state.audience = document.getElementById('i-audience').value.trim();
+  state.ask = parseFloat(document.getElementById('i-ask').value) || 0;
+  state.equity = parseFloat(document.getElementById('i-equity').value) || 0;
+  state.answers = [];
+
+  renderPitchSummary();
+  renderJudges();
+  buildQuestionQueue();
+  document.getElementById('panel-input').classList.add('hidden');
+  document.getElementById('panel-pitch').classList.remove('hidden');
+  document.getElementById('panel-pitch').scrollIntoView({behavior:'smooth'});
+  showQuestion();
+});
+
+function renderPitchSummary(){
+  const el = document.getElementById('pitch-summary');
+  el.innerHTML = `
+    <div class="name">${state.name}</div>
+    <div class="ask">Asking ${fmtUSD(state.ask)} for ${state.equity || '—'}% equity</div>
+    <dl>
+      <dt>Problem</dt><dd>${state.problem || '—'}</dd>
+      <dt>Solution</dt><dd>${state.solution || '—'}</dd>
+      <dt>Revenue model</dt><dd>${state.revenue || '—'}</dd>
+      <dt>Target audience</dt><dd>${state.audience || '—'}</dd>
+    </dl>
+  `;
+}
+
+function renderJudges(){
+  const grid = document.getElementById('judges-grid');
+  grid.innerHTML = judges.map(j=>`
+    <div class="judge-card" id="judge-${j.key}">
+      <div class="judge-emoji">${j.emoji}</div>
+      <div class="judge-name">${j.name}</div>
+      <div class="judge-focus">${j.role} · ${j.focus}</div>
+    </div>
+  `).join('');
+}
+
+/* ---------------- step 2: Q&A ---------------- */
+let queue = [];
+let qIndex = 0;
+
+function buildQuestionQueue(){
+  queue = [];
+  judges.forEach(j=>{
+    j.questions(state).forEach(q=>queue.push({judge:j, text:q}));
+  });
+  qIndex = 0;
+}
+
+function showQuestion(){
+  document.querySelectorAll('.judge-card').forEach(c=>c.classList.remove('active-glow'));
+  if(qIndex >= queue.length){ return finishQA(); }
+  const item = queue[qIndex];
+  document.getElementById(`judge-${item.judge.key}`).classList.add('active-glow');
+  document.getElementById('qa-question').innerHTML = `<span class="qnum">${item.judge.emoji} ${item.judge.name}</span>${item.text}`;
+  document.getElementById('qa-answer').value = '';
+  document.getElementById('qa-reaction').textContent = '';
+  document.getElementById('q-progress-label').textContent = `Question ${qIndex+1} of ${queue.length}`;
+  const pct = Math.round((qIndex/queue.length)*100);
+  document.getElementById('q-progress-pct').textContent = pct + '%';
+  document.getElementById('q-progress-fill').style.width = pct + '%';
+  document.getElementById('btn-answer').disabled = false;
+  document.getElementById('btn-answer').textContent = 'Answer';
+}
+
+document.getElementById('btn-answer').addEventListener('click', ()=>{
+  const item = queue[qIndex];
+  const answer = document.getElementById('qa-answer').value.trim();
+  state.answers.push({judge:item.judge.key, question:item.text, answer});
+
+  const qual = scoreText(answer, ['not sure',"i don't know",'no idea','tbd'], ['because','data','users','revenue','customers','tested','validated','proven'], 20);
+  let band = qual >= 55 ? 'good' : (qual >= 30 ? 'mid' : 'weak');
+  item.judge._lastQuality = (item.judge._qualitySum||0) + qual;
+  item.judge._qualitySum = item.judge._lastQuality;
+  item.judge._qCount = (item.judge._qCount||0) + 1;
+
+  document.getElementById('qa-reaction').textContent = item.judge.reactions[band];
+  document.getElementById('btn-answer').disabled = true;
+  document.getElementById('btn-answer').textContent = 'Next question in a moment…';
+
+  setTimeout(()=>{
+    qIndex++;
+    showQuestion();
+  }, 1100);
+});
+
+function finishQA(){
+  document.querySelectorAll('.judge-card').forEach(c=>c.classList.remove('active-glow'));
+  document.getElementById('panel-pitch').querySelector('.qa-block').innerHTML = `<div class="qa-reaction" style="color:var(--gold); font-style:normal;">All eight questions answered. The sharks are deliberating…</div>`;
+  computeScores();
+  setTimeout(renderScorecard, 900);
+}
+
+/* ---------------- step 3: scoring ---------------- */
+function computeScores(){
+  const problemQ = scoreText(state.problem, ['not sure','no problem','none really'], ['pain','cost','time','frustrat','expensive','risk'], 20);
+  const solutionQ = scoreText(state.solution, ['ai will figure','copy of','similar to'], ['unique','proprietary','faster','cheaper','automat','patent'], 20);
+  const avgAnswerQuality = judges.map(j=> j._qCount ? j._qualitySum / j._qCount : 20);
+
+  const revenueScores = {'Subscription':78,'Transaction':70,'Usage-based':66,'Enterprise license':74,'Advertising':50,'Marketplace commission':68,'Unclear':22,'':18};
+  const businessBase = revenueScores[state.revenue] ?? 30;
+
+  const marketBase = 30 + clamp((state.audience||'').length/2, 0, 25);
+
+  // Per-dimension composite scores across all judge weightings + content signals
+  const market = clamp(Math.round(marketBase*0.5 + avgAnswerQuality[0]*0.5), 5, 97);
+  const innovation = clamp(Math.round(solutionQ*0.6 + avgAnswerQuality[2]*0.4), 5, 97);
+  const business = clamp(Math.round(businessBase*0.55 + avgAnswerQuality[3]*0.45), 5, 97);
+  const execution = clamp(Math.round(problemQ*0.3 + avgAnswerQuality[1]*0.7), 5, 97);
+  const worthiness = clamp(Math.round(
+    judges.reduce((sum,j,i)=>{
+      const dims = {market, innovation, business, execution};
+      const dimVals = {market:dims.market, innovation:dims.innovation, business:dims.business, execution:dims.execution};
+      return sum + (dimVals.market*j.weights.market + dimVals.innovation*j.weights.innovation + dimVals.business*j.weights.business + dimVals.execution*j.weights.execution);
+    },0) / judges.length
+  ), 5, 97);
+
+  state.scores = {market, innovation, business, execution, worthiness};
+
+  // light up judge cards based on their personal weighted view
+  judges.forEach(j=>{
+    const personalScore = state.scores.market*j.weights.market + state.scores.innovation*j.weights.innovation + state.scores.business*j.weights.business + state.scores.execution*j.weights.execution;
+    j._personalScore = Math.round(personalScore);
+    const card = document.getElementById(`judge-${j.key}`);
+    if(card){
+      card.classList.add(personalScore>=62 ? 'lit-invest' : (personalScore<42 ? 'lit-reject' : ''));
+    }
+  });
+}
+
+function renderScorecard(){
+  const s = state.scores;
+  const items = [
+    {label:'Market Potential', val:s.market},
+    {label:'Innovation', val:s.innovation},
+    {label:'Business Model', val:s.business},
+    {label:'Execution', val:s.execution},
+    {label:'Investment Worthiness', val:s.worthiness},
+  ];
+  document.getElementById('score-grid').innerHTML = items.map(it=>`
+    <div class="score-item">
+      <div class="score-label">${it.label}</div>
+      <div class="score-num">${it.val}<span>/100</span></div>
+      <div class="score-bar-track"><div class="score-bar-fill" id="bar-${it.label.replace(/\\s/g,'')}" style="width:0%"></div></div>
+    </div>
+  `).join('');
+  document.getElementById('panel-scorecard').classList.remove('hidden');
+  document.getElementById('panel-scorecard').scrollIntoView({behavior:'smooth'});
+  setTimeout(()=>{
+    items.forEach(it=>{
+      const bar = document.getElementById(`bar-${it.label.replace(/\s/g,'')}`);
+      if(bar) bar.style.width = it.val + '%';
+    });
+  }, 100);
+}
+
+/* ---------------- step 4: decision ---------------- */
+document.getElementById('btn-see-decision').addEventListener('click', renderDecision);
+
+function decideOutcome(s){
+  const avg = Math.round((s.market+s.innovation+s.business+s.execution+s.worthiness)/5);
+  if(s.worthiness >= 75 && s.business >= 55) return {type:'invest', avg};
+  if(s.business >= 78 && s.execution >= 65 && s.market < 55) return {type:'acquire', avg};
+  if(avg >= 48) return {type:'comeback', avg};
+  return {type:'reject', avg};
+}
+
+function renderDecision(){
+  const s = state.scores;
+  const outcome = decideOutcome(s);
+  const banner = document.getElementById('decision-banner');
+  banner.className = 'decision-banner ' + outcome.type;
+
+  const copy = {
+    invest: {tag:'INVEST', sub:'The sharks are in.'},
+    acquire: {tag:'ACQUIRE', sub:`They don't want to grow it — they want to own it outright.`},
+    comeback: {tag:'COME BACK LATER', sub:'Promising, but not fundable today.'},
+    reject: {tag:'PASS', sub:'No deal this round.'}
+  }[outcome.type];
+
+  document.getElementById('decision-tag').textContent = copy.tag;
+  document.getElementById('decision-sub').textContent = copy.sub;
+
+  let valuation = 0, funding = 0;
+  if(outcome.type === 'invest'){
+    const equity = state.equity > 0 ? state.equity : 10;
+    valuation = state.ask > 0 ? Math.round(state.ask / (equity/100)) : Math.round(s.worthiness * 20000);
+    funding = state.ask > 0 ? state.ask : Math.round(valuation * (equity/100));
+  } else if(outcome.type === 'acquire'){
+    valuation = state.ask > 0 ? Math.round(state.ask * 3.2) : Math.round(s.business * 15000);
+    funding = valuation;
+  } else if(outcome.type === 'comeback'){
+    valuation = state.ask > 0 ? Math.round(state.ask / ((state.equity||10)/100)) : Math.round(s.worthiness * 15000);
+    funding = 0;
+  } else {
+    valuation = 0; funding = 0;
+  }
+
+  const dealItems = [];
+  if(outcome.type === 'invest' || outcome.type === 'acquire'){
+    dealItems.push({label:'Suggested Valuation', value: fmtUSD(valuation)});
+    dealItems.push({label: outcome.type==='acquire' ? 'Acquisition Offer' : 'Funding Amount', value: fmtUSD(funding)});
+    dealItems.push({label:'Equity', value: outcome.type==='acquire' ? '100%' : (state.equity||10) + '%'});
+  } else if(outcome.type === 'comeback'){
+    dealItems.push({label:'Indicative Valuation', value: fmtUSD(valuation)});
+    dealItems.push({label:'Funding Now', value:'$0'});
+    dealItems.push({label:'Revisit After', value:'Traction milestone'});
+  } else {
+    dealItems.push({label:'Funding Amount', value:'$0'});
+    dealItems.push({label:'Equity Given Up', value:'0%'});
+    dealItems.push({label:'Verdict', value:'No deal'});
+  }
+  document.getElementById('deal-grid').innerHTML = dealItems.map(d=>`
+    <div class="deal-item"><div class="dlabel">${d.label}</div><div class="dvalue">${d.value}</div></div>
+  `).join('');
+
+  const weakest = Object.entries({Market:s.market, Innovation:s.innovation, ['Business Model']:s.business, Execution:s.execution}).sort((a,b)=>a[1]-b[1])[0];
+  const strongest = Object.entries({Market:s.market, Innovation:s.innovation, ['Business Model']:s.business, Execution:s.execution}).sort((a,b)=>b[1]-a[1])[0];
+
+  let reasoning = '';
+  if(outcome.type === 'invest'){
+    reasoning = `${state.name} scored strongest on ${strongest[0]} (${strongest[1]}/100), and the room's average of ${outcome.avg}/100 cleared the bar for conviction. ${weakest[0]} at ${weakest[1]}/100 is the thing to keep an eye on post-close, but it wasn't disqualifying.`;
+  } else if(outcome.type === 'acquire'){
+    reasoning = `The business model and execution are strong enough to run today (Business Model ${s.business}/100, Execution ${s.execution}/100), but the market looked too narrow to justify a growth-stage bet. The sharks would rather fold this into something they already own than fund it to scale independently.`;
+  } else if(outcome.type === 'comeback'){
+    reasoning = `Nothing here is broken, but nothing is proven either — a room average of ${outcome.avg}/100 lands in "interesting, not investable yet." ${weakest[0]} at ${weakest[1]}/100 is the fastest lever: fix that and this becomes a very different conversation.`;
+  } else {
+    reasoning = `A room average of ${outcome.avg}/100 with ${weakest[0]} at just ${weakest[1]}/100 was too much to overcome. The sharks weren't unkind about it — they just didn't see the path to their money back.`;
+  }
+  document.getElementById('decision-reasoning').textContent = reasoning;
+
+  state.outcome = outcome;
+  state.valuation = valuation;
+  state.funding = funding;
+
+  document.getElementById('panel-decision').classList.remove('hidden');
+  document.getElementById('panel-leaderboard').classList.remove('hidden');
+  document.getElementById('panel-decision').scrollIntoView({behavior:'smooth'});
+
+  if(outcome.type === 'invest' || outcome.type === 'acquire'){
+    fireConfetti();
+  }
+
+  addToLeaderboard(outcome);
+}
+
+function fireConfetti(){
+  if(typeof confetti !== 'function') return;
+  const duration = 1800;
+  const end = Date.now() + duration;
+  (function frame(){
+    confetti({particleCount:4, angle:60, spread:60, origin:{x:0}, colors:['#2DD4BF','#E8B84B','#43B77E']});
+    confetti({particleCount:4, angle:120, spread:60, origin:{x:1}, colors:['#2DD4BF','#E8B84B','#43B77E']});
+    if(Date.now() < end) requestAnimationFrame(frame);
+  })();
+}
+
+/* ---------------- leaderboard ---------------- */
+function addToLeaderboard(outcome){
+  leaderboard.push({
+    name: state.name,
+    decision: outcome.type,
+    score: state.scores.worthiness,
+    valuation: state.valuation
+  });
+  leaderboard.sort((a,b)=>b.score-a.score);
+  renderLeaderboard();
+}
+
+function renderLeaderboard(){
+  const empty = document.getElementById('leaderboard-empty');
+  const table = document.getElementById('leaderboard-table');
+  if(leaderboard.length === 0){
+    empty.classList.remove('hidden');
+    table.classList.add('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  table.classList.remove('hidden');
+  const badgeLabel = {invest:'Invest', acquire:'Acquire', comeback:'Come Back', reject:'Pass'};
+  document.getElementById('leaderboard-body').innerHTML = leaderboard.map((row,i)=>`
+    <tr>
+      <td class="rank">${i+1}</td>
+      <td>${row.name}</td>
+      <td><span class="badge ${row.decision}">${badgeLabel[row.decision]}</span></td>
+      <td>${row.score}/100</td>
+      <td>${row.valuation ? fmtUSD(row.valuation) : '—'}</td>
+    </tr>
+  `).join('');
+}
+
+/* ---------------- PDF report ---------------- */
+document.getElementById('btn-download-pdf').addEventListener('click', ()=>{
+  if(!window.jspdf){ alert('PDF library failed to load — check your connection.'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const s = state.scores;
+  let y = 20;
+  doc.setFontSize(20); doc.text(state.name, 14, y); y+=10;
+  doc.setFontSize(11); doc.text(`Pitch Report — AI Shark Tank Simulator`, 14, y); y+=10;
+  doc.setFontSize(12);
+  doc.text(`Problem: ${state.problem || '-'}`, 14, y, {maxWidth:180}); y+=16;
+  doc.text(`Solution: ${state.solution || '-'}`, 14, y, {maxWidth:180}); y+=16;
+  doc.text(`Revenue Model: ${state.revenue || '-'}`, 14, y); y+=8;
+  doc.text(`Target Audience: ${state.audience || '-'}`, 14, y); y+=8;
+  doc.text(`Ask: ${fmtUSD(state.ask)} for ${state.equity||'-'}% equity`, 14, y); y+=14;
+
+  doc.setFontSize(14); doc.text('Scorecard', 14, y); y+=8;
+  doc.setFontSize(11);
+  [['Market Potential', s.market], ['Innovation', s.innovation], ['Business Model', s.business], ['Execution', s.execution], ['Investment Worthiness', s.worthiness]]
+    .forEach(([label,val])=>{ doc.text(`${label}: ${val}/100`, 14, y); y+=7; });
+  y+=8;
+
+  doc.setFontSize(14); doc.text('Decision', 14, y); y+=8;
+  doc.setFontSize(11);
+  const labelMap = {invest:'INVEST', acquire:'ACQUIRE', comeback:'COME BACK LATER', reject:'PASS'};
+  doc.text(`Verdict: ${labelMap[state.outcome.type]}`, 14, y); y+=7;
+  doc.text(`Valuation: ${fmtUSD(state.valuation)}`, 14, y); y+=7;
+  doc.text(`Funding: ${fmtUSD(state.funding)}`, 14, y); y+=10;
+  doc.setFontSize(11);
+  doc.text(doc.splitTextToSize(document.getElementById('decision-reasoning').textContent, 180), 14, y);
+
+  doc.save(`${state.name.replace(/\s+/g,'_')}_pitch_report.pdf`);
+});
+
+/* ---------------- share ---------------- */
+document.getElementById('btn-share').addEventListener('click', async ()=>{
+  const labelMap = {invest:'got invested in', acquire:'got acquired', comeback:'got a "come back later"', reject:'got passed on'};
+  const text = `${state.name} just ${labelMap[state.outcome.type]} in the AI Shark Tank Simulator with an Investment Worthiness score of ${state.scores.worthiness}/100.`;
+  if(navigator.share){
+    try{ await navigator.share({title:'AI Shark Tank Result', text}); }catch(e){}
+  } else {
+    try{
+      await navigator.clipboard.writeText(text);
+      const btn = document.getElementById('btn-share');
+      const old = btn.textContent;
+      btn.textContent = 'Copied to clipboard!';
+      setTimeout(()=>btn.textContent = old, 1800);
+    }catch(e){ alert(text); }
+  }
+});
+
+/* ---------------- restart ---------------- */
+document.getElementById('btn-restart').addEventListener('click', ()=>{
+  ['i-name','i-problem','i-solution','i-audience','i-ask','i-equity'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('i-revenue').value = '';
+  judges.forEach(j=>{ j._qualitySum=0; j._qCount=0; });
+
+  document.getElementById('panel-pitch').classList.add('hidden');
+  document.getElementById('panel-scorecard').classList.add('hidden');
+  document.getElementById('panel-decision').classList.add('hidden');
+  document.getElementById('panel-input').classList.remove('hidden');
+  document.getElementById('panel-input').scrollIntoView({behavior:'smooth'});
+});
+</script>
+</body>
+</html>
