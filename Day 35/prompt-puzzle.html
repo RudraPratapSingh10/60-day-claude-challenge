@@ -1,0 +1,1694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompt Puzzle — Master AI Prompting Through Play</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#0A0D18;
+    --bg-panel:#12162A;
+    --bg-panel-2:#1A2038;
+    --bg-panel-3:#212847;
+    --line:#2B3358;
+    --text-1:#E9ECF7;
+    --text-2:#9BA3C4;
+    --text-3:#666F94;
+    --amber:#FFB454;
+    --amber-dim:#8A6B33;
+    --cyan:#7EE7E0;
+    --coral:#FF6B7A;
+    --violet:#A594FF;
+    --green:#7CE0A0;
+    --radius:14px;
+    --mono:'JetBrains Mono', monospace;
+    --disp:'Space Grotesk', sans-serif;
+    --body:'Inter', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 0%, rgba(165,148,255,0.10), transparent 45%),
+      radial-gradient(circle at 85% 15%, rgba(126,231,224,0.08), transparent 40%),
+      var(--bg-deep);
+    color:var(--text-1);
+    font-family:var(--body);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important;}
+  }
+  ::selection{background:var(--amber); color:#1a1200;}
+  #app{max-width:1180px;margin:0 auto;padding:28px 20px 80px;}
+  .hide{display:none !important;}
+
+  /* ---------- Terminal chrome ---------- */
+  .term{
+    background:linear-gradient(180deg, var(--bg-panel), var(--bg-panel-2));
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:0 20px 60px -20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.03);
+    overflow:hidden;
+  }
+  .term-bar{
+    display:flex;align-items:center;gap:8px;
+    padding:12px 16px;
+    background:rgba(255,255,255,0.02);
+    border-bottom:1px solid var(--line);
+  }
+  .dot{width:10px;height:10px;border-radius:50%;}
+  .dot.r{background:#FF6159;}
+  .dot.y{background:#FFBD2E;}
+  .dot.g{background:#28C840;}
+  .term-title{
+    margin-left:8px;font-family:var(--mono);font-size:12px;color:var(--text-3);
+    letter-spacing:0.02em;
+  }
+  .term-body{padding:26px 28px;}
+  @media (max-width:640px){ .term-body{padding:18px 16px;} }
+
+  /* ---------- Header / hero ---------- */
+  .hero{padding:38px 10px 26px;text-align:left;}
+  .eyebrow{
+    font-family:var(--mono);font-size:12px;color:var(--amber);
+    letter-spacing:0.12em;text-transform:uppercase;margin-bottom:14px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .eyebrow .caret{display:inline-block;width:8px;height:14px;background:var(--amber);animation:blink 1.1s steps(1) infinite;}
+  @keyframes blink{0%,49%{opacity:1;}50%,100%{opacity:0;}}
+  h1.title{
+    font-family:var(--disp);font-weight:700;font-size:clamp(32px,5vw,52px);
+    line-height:1.05;margin:0 0 14px;letter-spacing:-0.01em;
+    background:linear-gradient(100deg, var(--text-1) 40%, var(--cyan) 65%, var(--violet) 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .subtitle{font-size:16px;color:var(--text-2);max-width:640px;line-height:1.6;margin-bottom:6px;}
+
+  /* ---------- Setup screen ---------- */
+  .setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:26px;}
+  @media (max-width:760px){.setup-grid{grid-template-columns:1fr;}}
+  .field-label{
+    font-family:var(--mono);font-size:12px;color:var(--text-3);text-transform:uppercase;
+    letter-spacing:0.08em;margin-bottom:12px;display:block;
+  }
+  .chip-row{display:flex;flex-wrap:wrap;gap:10px;}
+  .opt-chip{
+    font-family:var(--body);font-weight:600;font-size:13.5px;
+    padding:11px 16px;border-radius:10px;border:1px solid var(--line);
+    background:var(--bg-panel-3);color:var(--text-2);cursor:pointer;
+    transition:all .18s ease;
+  }
+  .opt-chip:hover{border-color:var(--cyan);color:var(--text-1);transform:translateY(-1px);}
+  .opt-chip.sel{
+    background:linear-gradient(135deg, rgba(255,180,84,0.18), rgba(165,148,255,0.14));
+    border-color:var(--amber);color:var(--amber);
+    box-shadow:0 0 0 1px var(--amber) inset;
+  }
+  .start-btn{
+    margin-top:28px;
+    font-family:var(--disp);font-weight:700;font-size:16px;
+    padding:15px 30px;border-radius:12px;border:none;cursor:pointer;
+    background:linear-gradient(120deg, var(--amber), var(--violet));
+    color:#111225;
+    box-shadow:0 12px 30px -10px rgba(255,180,84,0.4);
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .start-btn:hover{transform:translateY(-2px);box-shadow:0 16px 36px -8px rgba(165,148,255,0.5);}
+  .start-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none;}
+  .learn-list{list-style:none;margin:22px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px 22px;}
+  @media (max-width:640px){.learn-list{grid-template-columns:1fr;}}
+  .learn-list li{
+    font-size:13.5px;color:var(--text-2);display:flex;gap:10px;align-items:flex-start;
+    font-family:var(--body);
+  }
+  .learn-list .num{
+    font-family:var(--mono);color:var(--cyan);font-size:12px;flex-shrink:0;
+    width:18px;
+  }
+
+  /* ---------- HUD ---------- */
+  .hud{
+    display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;justify-content:space-between;align-items:center;
+  }
+  .hud-stats{display:flex;flex-wrap:wrap;gap:8px;}
+  .stat-pill{
+    font-family:var(--mono);font-size:11.5px;color:var(--text-2);
+    background:var(--bg-panel-3);border:1px solid var(--line);border-radius:999px;
+    padding:7px 13px;display:flex;align-items:center;gap:6px;
+  }
+  .stat-pill b{color:var(--text-1);font-weight:600;}
+  .stat-pill.score b{color:var(--amber);}
+  .progress-wrap{
+    flex:1 1 100%;height:6px;background:var(--bg-panel-3);border-radius:99px;overflow:hidden;margin-bottom:4px;
+  }
+  .progress-bar{height:100%;background:linear-gradient(90deg, var(--cyan), var(--amber));border-radius:99px;transition:width .4s ease;}
+  .scenario-counter{font-family:var(--mono);font-size:12px;color:var(--text-3);}
+
+  /* ---------- Challenge shell ---------- */
+  .chal-type{
+    display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:0.08em;
+    text-transform:uppercase;color:var(--bg-deep);background:var(--cyan);
+    padding:4px 10px;border-radius:6px;font-weight:700;margin-bottom:14px;
+  }
+  .chal-type.clean{background:var(--violet);}
+  .chal-type.choose{background:var(--amber);}
+  h2.scen-title{font-family:var(--disp);font-size:24px;margin:0 0 8px;color:var(--text-1);}
+  .scen-desc{color:var(--text-2);font-size:14.5px;line-height:1.6;margin-bottom:6px;}
+  .desired-box{
+    margin:16px 0 22px;padding:14px 16px;border-radius:10px;
+    background:rgba(126,231,224,0.06);border:1px dashed rgba(126,231,224,0.35);
+  }
+  .desired-box .lbl{font-family:var(--mono);font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;}
+  .desired-box p{margin:0;font-size:13.5px;color:var(--text-2);line-height:1.55;}
+
+  /* Build challenge */
+  .build-layout{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:6px;}
+  @media (max-width:820px){.build-layout{grid-template-columns:1fr;}}
+  .pool, .dropzone{
+    background:var(--bg-panel);border:1px solid var(--line);border-radius:12px;padding:14px;
+    min-height:220px;
+  }
+  .pane-label{font-family:var(--mono);font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;}
+  .block{
+    font-family:var(--mono);font-size:12.5px;line-height:1.5;color:var(--text-1);
+    background:var(--bg-panel-3);border:1px solid var(--line);border-radius:9px;
+    padding:11px 13px;margin-bottom:9px;cursor:grab;position:relative;
+    transition:all .15s ease;
+  }
+  .block:hover{border-color:var(--cyan);transform:translateX(2px);}
+  .block:active{cursor:grabbing;}
+  .block.dragging{opacity:0.35;}
+  .block .cat-tag{
+    display:inline-block;font-family:var(--body);font-size:10px;font-weight:700;
+    text-transform:uppercase;letter-spacing:0.06em;color:var(--bg-deep);
+    background:var(--text-3);border-radius:4px;padding:2px 6px;margin-bottom:6px;
+  }
+  .block[data-cat="Role"] .cat-tag{background:var(--cyan);}
+  .block[data-cat="Context"] .cat-tag{background:var(--amber);}
+  .block[data-cat="Task"] .cat-tag{background:var(--green);}
+  .block[data-cat="Constraints"] .cat-tag{background:var(--violet);}
+  .block[data-cat="Format"] .cat-tag{background:#FF9F6B;}
+  .block[data-cat="Distractor"] .cat-tag{background:var(--coral);}
+  .dropzone{border-style:dashed;}
+  .dropzone.dragover{border-color:var(--amber);background:rgba(255,180,84,0.05);}
+  .dropzone .empty-hint{color:var(--text-3);font-size:12.5px;font-family:var(--mono);text-align:center;padding:30px 6px;}
+  .slot-num{font-family:var(--mono);font-size:10px;color:var(--text-3);margin-right:6px;}
+  .remove-x{
+    position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:50%;
+    background:var(--bg-panel);border:1px solid var(--line);color:var(--text-3);
+    font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .remove-x:hover{color:var(--coral);border-color:var(--coral);}
+
+  /* Clean challenge */
+  .clean-prompt-box{
+    background:var(--bg-panel);border:1px solid var(--line);border-radius:12px;
+    padding:16px;display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;
+  }
+  .chip{
+    font-family:var(--mono);font-size:12.5px;color:var(--text-1);
+    background:var(--bg-panel-3);border:1px solid var(--line);border-radius:8px;
+    padding:9px 12px;cursor:pointer;transition:all .15s ease;user-select:none;
+  }
+  .chip:hover{border-color:var(--coral);}
+  .chip.removed{
+    opacity:0.35;text-decoration:line-through;border-color:var(--coral);
+    background:rgba(255,107,122,0.06);
+  }
+  .clean-hint{font-size:12.5px;color:var(--text-3);font-family:var(--body);margin-bottom:14px;}
+
+  /* Choose challenge */
+  .choose-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:10px;}
+  .choice-card{
+    background:var(--bg-panel);border:1.5px solid var(--line);border-radius:12px;
+    padding:16px 18px;cursor:pointer;transition:all .15s ease;
+  }
+  .choice-card:hover{border-color:var(--cyan);transform:translateY(-1px);}
+  .choice-card.picked{border-color:var(--amber);background:rgba(255,180,84,0.06);}
+  .choice-card.correct-reveal{border-color:var(--green);background:rgba(124,224,160,0.07);}
+  .choice-card.wrong-reveal{border-color:var(--coral);opacity:0.6;}
+  .choice-label{font-family:var(--mono);font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;}
+  .choice-text{font-family:var(--mono);font-size:13px;color:var(--text-2);line-height:1.6;}
+
+  /* Actions row */
+  .actions-row{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;align-items:center;}
+  .btn{
+    font-family:var(--body);font-weight:600;font-size:13.5px;
+    padding:11px 20px;border-radius:10px;cursor:pointer;transition:all .15s ease;border:1px solid var(--line);
+    background:var(--bg-panel-3);color:var(--text-1);
+  }
+  .btn:hover{border-color:var(--cyan);transform:translateY(-1px);}
+  .btn.primary{
+    background:linear-gradient(120deg, var(--amber), var(--violet));color:#111225;border:none;font-weight:700;
+  }
+  .btn.primary:hover{box-shadow:0 10px 26px -8px rgba(165,148,255,0.5);}
+  .btn.primary:disabled{opacity:0.35;cursor:not-allowed;transform:none;box-shadow:none;}
+  .btn.ghost{background:transparent;}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+  /* Feedback panel (post-submit) */
+  .feedback{margin-top:22px;border-radius:12px;padding:18px 20px;border:1px solid var(--line);background:var(--bg-panel);}
+  .feedback.good{border-color:rgba(124,224,160,0.4);}
+  .feedback.bad{border-color:rgba(255,107,122,0.4);}
+  .fb-row{display:flex;gap:10px;align-items:baseline;margin-bottom:10px;}
+  .fb-badge{font-family:var(--mono);font-size:12px;padding:3px 10px;border-radius:6px;font-weight:700;}
+  .fb-badge.good{background:rgba(124,224,160,0.15);color:var(--green);}
+  .fb-badge.bad{background:rgba(255,107,122,0.15);color:var(--coral);}
+  .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
+  @media (max-width:700px){.compare-grid{grid-template-columns:1fr;}}
+  .compare-card{background:var(--bg-panel-2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;}
+  .compare-card .lbl{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;color:var(--text-3);}
+  .compare-card.weak .lbl{color:var(--coral);}
+  .compare-card.opt .lbl{color:var(--green);}
+  .compare-card pre{
+    font-family:var(--mono);font-size:12px;color:var(--text-2);white-space:pre-wrap;margin:0;line-height:1.55;
+  }
+  .principle-box{
+    margin-top:14px;padding:12px 14px;border-radius:10px;background:rgba(165,148,255,0.07);
+    border-left:3px solid var(--violet);
+  }
+  .principle-box .lbl{font-family:var(--mono);font-size:10.5px;color:var(--violet);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;}
+  .principle-box p{margin:0;font-size:13px;color:var(--text-2);line-height:1.55;}
+
+  /* Toasts */
+  #toast-wrap{position:fixed;top:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:10px;}
+  .toast{
+    font-family:var(--mono);font-size:13px;font-weight:600;padding:11px 16px;border-radius:10px;
+    background:var(--bg-panel-3);border:1px solid var(--line);color:var(--text-1);
+    box-shadow:0 10px 30px -10px rgba(0,0,0,0.6);
+    animation:toastIn .25s ease, toastOut .3s ease 2.4s forwards;
+  }
+  .toast.pos{border-color:var(--green);color:var(--green);}
+  .toast.neg{border-color:var(--coral);color:var(--coral);}
+  .toast.info{border-color:var(--cyan);color:var(--cyan);}
+  @keyframes toastIn{from{transform:translateX(30px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+  @keyframes toastOut{to{transform:translateX(30px);opacity:0;}}
+
+  /* Score pop */
+  .score-pop{
+    position:fixed;pointer-events:none;font-family:var(--disp);font-weight:700;font-size:22px;
+    color:var(--amber);z-index:1000;animation:popUp 1s ease forwards;
+  }
+  @keyframes popUp{0%{opacity:0;transform:translateY(0) scale(0.8);}20%{opacity:1;transform:translateY(-10px) scale(1.1);}100%{opacity:0;transform:translateY(-60px) scale(1);}}
+
+  .shake{animation:shakeAnim .35s ease;}
+  @keyframes shakeAnim{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+
+  /* ---------- Report screen ---------- */
+  .report-hero{text-align:center;padding:20px 10px 6px;}
+  .score-ring-wrap{display:flex;justify-content:center;margin:14px 0 8px;}
+  .score-num{font-family:var(--disp);font-weight:700;font-size:54px;color:var(--amber);}
+  .rating-badge{
+    font-family:var(--mono);font-size:14px;color:var(--violet);margin-top:6px;
+    background:rgba(165,148,255,0.1);display:inline-block;padding:6px 16px;border-radius:99px;
+    border:1px solid rgba(165,148,255,0.3);
+  }
+  .rank-line{color:var(--text-2);font-size:13.5px;margin-top:10px;}
+  .report-grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:20px;margin-top:26px;}
+  @media (max-width:820px){.report-grid{grid-template-columns:1fr;}}
+  .report-card{background:var(--bg-panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;}
+  .report-card h3{font-family:var(--disp);font-size:16px;margin:0 0 14px;color:var(--text-1);}
+  .dna-row{margin-bottom:14px;}
+  .dna-row .dna-lbl{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11.5px;color:var(--text-2);margin-bottom:6px;}
+  .dna-track{height:8px;background:var(--bg-panel-3);border-radius:99px;overflow:hidden;}
+  .dna-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--cyan), var(--violet));transition:width 1s ease;}
+  .metric-list{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;}
+  .metric-item{background:var(--bg-panel-2);border:1px solid var(--line);border-radius:9px;padding:10px 12px;}
+  .metric-item .m-lbl{font-family:var(--mono);font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.05em;}
+  .metric-item .m-val{font-family:var(--disp);font-size:18px;color:var(--text-1);margin-top:2px;}
+  .feedback-text{font-size:13.5px;color:var(--text-2);line-height:1.65;margin-bottom:14px;}
+  .milestone-box{
+    background:rgba(255,180,84,0.06);border:1px dashed rgba(255,180,84,0.35);
+    border-radius:10px;padding:12px 14px;font-size:13px;color:var(--text-2);line-height:1.55;
+  }
+  .final-prompt-box{
+    margin-top:22px;background:var(--bg-panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;
+  }
+  .final-prompt-box pre{font-family:var(--mono);font-size:13px;color:var(--cyan);white-space:pre-wrap;line-height:1.6;margin:10px 0 0;}
+  .report-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px;justify-content:center;}
+
+  .hidden-visually{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);}
+  button:focus-visible, .opt-chip:focus-visible, .chip:focus-visible, .choice-card:focus-visible, .block:focus-visible{
+    outline:2px solid var(--cyan); outline-offset:2px;
+  }
+</style>
+</head>
+<body>
+<div id="toast-wrap"></div>
+<div id="app">
+
+  <!-- ============ SETUP SCREEN ============ -->
+  <section id="screen-setup">
+    <div class="hero">
+      <div class="eyebrow"><span class="caret"></span> prompt-puzzle --init</div>
+      <h1 class="title">🧩 Prompt Puzzle</h1>
+      <p class="subtitle">Master AI prompting through play. Build prompts, clean up noisy ones, and pick the winner in output-comparison duels — three challenge types, one skill: writing prompts that actually work.</p>
+    </div>
+
+    <div class="term">
+      <div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="term-title">setup.config</span></div>
+      <div class="term-body">
+        <div class="setup-grid">
+          <div>
+            <label class="field-label">01 — choose a domain</label>
+            <div class="chip-row" id="domain-row"></div>
+          </div>
+          <div>
+            <label class="field-label">02 — choose difficulty</label>
+            <div class="chip-row" id="difficulty-row"></div>
+          </div>
+        </div>
+        <button class="start-btn" id="start-btn" disabled>Run prompt-puzzle.exe →</button>
+
+        <ul class="learn-list">
+          <li><span class="num">01</span> Prompt Building — role, context, constraints &amp; formatting</li>
+          <li><span class="num">02</span> Prompt Optimization — spot redundant &amp; vague components</li>
+          <li><span class="num">03</span> Output Comparison — see optimized prompts win, every time</li>
+          <li><span class="num">04</span> Gamified Learning — learn by doing, not by reading</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GAME SCREEN ============ -->
+  <section id="screen-game" class="hide">
+    <div class="hud">
+      <div class="progress-wrap"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+      <div class="scenario-counter" id="scenario-counter">Scenario 1 / 8</div>
+      <div class="hud-stats">
+        <div class="stat-pill score">score <b id="hud-score">0</b></div>
+        <div class="stat-pill">accuracy <b id="hud-accuracy">100%</b></div>
+        <div class="stat-pill">moves <b id="hud-moves">0</b></div>
+        <div class="stat-pill">wrong <b id="hud-wrong">0</b></div>
+        <div class="stat-pill">hints <b id="hud-hints">0/0</b></div>
+        <div class="stat-pill">time <b id="hud-time">0:00</b></div>
+      </div>
+    </div>
+
+    <div class="term">
+      <div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="term-title" id="term-title">challenge.run</span></div>
+      <div class="term-body">
+        <div id="challenge-mount"></div>
+        <div class="actions-row">
+          <button class="btn ghost" id="hint-btn">💡 Use a hint</button>
+          <button class="btn primary" id="submit-btn">Submit answer</button>
+          <button class="btn primary hide" id="next-btn">Next scenario →</button>
+        </div>
+        <div id="feedback-mount"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ REPORT SCREEN ============ -->
+  <section id="screen-report" class="hide">
+    <div class="report-hero">
+      <div class="eyebrow" style="justify-content:center;"><span class="caret"></span> prompt-puzzle --report</div>
+      <h1 class="title" style="font-size:clamp(26px,4vw,38px);">Prompt Performance Report</h1>
+      <div class="score-num" id="report-score">0</div>
+      <div class="rating-badge" id="report-rating">Rating</div>
+      <div class="rank-line" id="report-rank">Rank</div>
+    </div>
+
+    <div class="report-grid">
+      <div class="report-card">
+        <h3>🧬 Prompt DNA</h3>
+        <div id="dna-mount"></div>
+        <div class="metric-list" id="metric-mount"></div>
+      </div>
+      <div class="report-card">
+        <h3>📋 Feedback &amp; Next Milestone</h3>
+        <div class="feedback-text" id="feedback-text"></div>
+        <div class="milestone-box" id="milestone-box"></div>
+      </div>
+    </div>
+
+    <div class="final-prompt-box">
+      <h3 style="font-family:var(--disp);font-size:16px;margin:0;">🏁 Your Final Optimized Prompt</h3>
+      <pre id="final-prompt-text"></pre>
+    </div>
+
+    <div class="report-actions">
+      <button class="btn primary" id="replay-same-btn">🔁 Replay — same setup</button>
+      <button class="btn" id="replay-new-btn">🎛 Replay — new domain / difficulty</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ======================================================================
+   SCENARIO DATA
+   ====================================================================== */
+function block(id, cat, text){ return {id:id, cat:cat, text:text}; }
+
+const DOMAINS = ["Software Development","Marketing & Copywriting","Business & Productivity","Creative Writing & Storytelling","Education & Learning"];
+const DIFFICULTIES = ["Beginner","Intermediate","Advanced"];
+
+const SCENARIOS = {};
+
+/* ---------------- Software Development (rich, 8) ---------------- */
+SCENARIOS["Software Development"] = [
+{
+  id:"sd1", title:"Debugging a Node.js Memory Leak", type:"build",
+  desiredOutput:"A structured diagnostic plan identifying likely memory-leak sources in a Node.js API, each paired with a way to verify it.",
+  blocks:[
+    block("b1","Role","You are a senior Node.js performance engineer."),
+    block("b2","Context","The API serves 10k requests per minute and memory usage grows steadily over 48 hours before the process crashes."),
+    block("b3","Task","Identify the most likely causes of the memory leak and propose a diagnostic plan."),
+    block("b4","Constraints","Focus only on Node.js-specific causes such as event listeners, closures, and caches; do not suggest infrastructure scaling as a fix."),
+    block("b5","Format","Respond with a numbered list of hypotheses, each with a diagnostic command to verify it."),
+    block("d1","Distractor","Please be very thorough and detailed and comprehensive in your answer."),
+    block("d2","Distractor","You are the best programmer in the entire world and never make mistakes."),
+    block("d3","Distractor","Make sure to use lots of technical jargon so it sounds smart."),
+    block("d4","Distractor","This is very important, my job depends on it.")
+  ],
+  weakPrompt:"My node app has a memory leak, help fix it.",
+  overEngineeredExtra:true,
+  weakOutput:"Try restarting your server periodically and check for memory leaks in your code. You could also increase your server memory.",
+  optimizedOutput:"1. Unbounded event listeners — run node --inspect and check listener counts via process.eventNames().\n2. Closure retention in request handlers — take a heap snapshot diff in Chrome DevTools.\n3. Unbounded in-memory cache — sample process.memoryUsage() over time to confirm growth.\n4. Global array or map accumulation — grep the codebase for module-level collections that only grow.",
+  principle:"A specific role, measurable context, and explicit constraints turn a vague bug report into an actionable, verifiable diagnostic plan instead of generic advice."
+},
+{
+  id:"sd2", title:"Designing a Bookstore REST API", type:"clean",
+  desiredOutput:"A REST API specification for managing books, authors, and inventory, delivered as a clean endpoint table.",
+  blocks:[
+    block("b1","Role","You are a senior backend architect specializing in RESTful API design."),
+    block("b2","Context","The system is a bookstore inventory service using PostgreSQL, expected to handle 500 concurrent users, with strict data consistency requirements."),
+    block("b3","Task","Design the REST API endpoints for managing books, authors, and inventory stock levels."),
+    block("b4","Constraints","Follow REST maturity level 3 conventions and use standard HTTP status codes; do not include authentication implementation details."),
+    block("b5","Format","Present the result as a table with columns: Method, Endpoint, Description, Request Body, Response Codes."),
+    block("d1","Distractor","Make it the best API ever created in the history of software."),
+    block("d2","Distractor","Use as many endpoints as possible to be comprehensive."),
+    block("d3","Distractor","Include friendly emojis throughout to make it fun."),
+    block("d4","Distractor","Explain every single HTTP concept from scratch before answering.")
+  ],
+  weakPrompt:"Design a REST API for a bookstore.",
+  overEngineeredExtra:true,
+  weakOutput:"You could have endpoints like /books, /authors, and /inventory for basic CRUD operations.",
+  optimizedOutput:"GET /books — list books — none — 200\nPOST /books — create book — {title, authorId, isbn} — 201, 400\nGET /books/{id} — fetch one book — none — 200, 404\nPATCH /books/{id}/stock — adjust stock level — {delta} — 200, 409\nGET /authors/{id}/books — list an author's books — none — 200, 404",
+  principle:"Precise technical constraints plus an explicit output format eliminate ambiguity and produce an implementation-ready spec instead of a loose idea."
+},
+{
+  id:"sd3", title:"Optimizing a Slow SQL Query", type:"choose",
+  desiredOutput:"A prioritized list of concrete optimizations for a 12-second join query, each with expected impact and exact SQL.",
+  blocks:[
+    block("b1","Role","You are a database performance tuning expert."),
+    block("b2","Context","A query joining orders, customers, and line_items takes 12 seconds on a 40M-row table; EXPLAIN ANALYZE shows a sequential scan on orders.customer_id."),
+    block("b3","Task","Recommend specific optimizations to reduce query time."),
+    block("b4","Constraints","Assume PostgreSQL 15; do not recommend changing the database engine."),
+    block("b5","Format","List each optimization with expected impact (high, medium, or low) and the exact SQL or DDL command."),
+    block("d1","Distractor","Solve this as fast as humanly possible."),
+    block("d2","Distractor","Assume I know nothing about databases at all."),
+    block("d3","Distractor","Format your answer like a motivational speech."),
+    block("d4","Distractor","Give me ten alternative unrelated approaches too.")
+  ],
+  weakPrompt:"This SQL query is slow, how do I make it faster?",
+  overEngineeredExtra:true,
+  weakOutput:"Add some indexes and maybe rewrite the query. Consider caching results too.",
+  optimizedOutput:"1. [High] CREATE INDEX idx_orders_customer_id ON orders(customer_id); — eliminates the sequential scan.\n2. [Medium] Rewrite the correlated subquery on line_items as a JOIN.\n3. [Low] Increase work_mem for sort-heavy aggregate steps.",
+  principle:"Providing the actual bottleneck evidence — the EXPLAIN ANALYZE output — lets the model give targeted fixes instead of generic tuning tips."
+},
+{
+  id:"sd4", title:"Refactoring a God Class", type:"build",
+  desiredOutput:"A refactor plan that splits a 1,200-line class into single-responsibility classes, plus a migration path.",
+  blocks:[
+    block("b1","Role","You are a senior software architect focused on clean code and SOLID principles."),
+    block("b2","Context","The OrderManager class has 1,200 lines and handles validation, pricing, inventory updates, email notifications, and logging in one class."),
+    block("b3","Task","Propose a refactored class structure that separates these responsibilities."),
+    block("b4","Constraints","Apply the Single Responsibility and Dependency Inversion principles; keep the public API of OrderManager backward-compatible."),
+    block("b5","Format","Provide a bulleted list of new classes with their single responsibility, followed by a short migration plan."),
+    block("d1","Distractor","Rewrite everything in a completely different programming language."),
+    block("d2","Distractor","Add as many design patterns as possible to impress reviewers."),
+    block("d3","Distractor","Make the code look impressive above all else."),
+    block("d4","Distractor","Just tell me the class is fine as it is.")
+  ],
+  weakPrompt:"This class is too big, help me refactor it.",
+  overEngineeredExtra:true,
+  weakOutput:"You should break it into smaller classes and follow good coding practices in general.",
+  optimizedOutput:"- OrderValidator: validates order data\n- PricingCalculator: computes totals and discounts\n- InventoryUpdater: adjusts stock levels\n- OrderNotifier: sends email confirmations\n- OrderLogger: structured logging\nMigration: introduce the new classes behind the existing OrderManager facade, delegate calls internally, then deprecate the internals over two releases.",
+  principle:"Naming the exact code smell and the target design principles turns a vague 'refactor this' into a concrete, reviewable design."
+},
+{
+  id:"sd5", title:"Diagnosing a CrashLoopBackOff Pod", type:"clean",
+  desiredOutput:"A root-cause diagnosis and remediation checklist for a Kubernetes pod stuck in CrashLoopBackOff.",
+  blocks:[
+    block("b1","Role","You are a Kubernetes SRE with deep troubleshooting experience."),
+    block("b2","Context","A pod running a Java Spring Boot service enters CrashLoopBackOff after three restarts; kubectl logs shows OOMKilled in the last event and the memory limit is set to 256Mi."),
+    block("b3","Task","Diagnose the likely cause and propose remediation steps."),
+    block("b4","Constraints","Assume resource limits cannot be increased due to cluster capacity; focus on application-level fixes."),
+    block("b5","Format","Respond with the root cause first, then a numbered remediation checklist."),
+    block("d1","Distractor","Just tell me to restart the pod and see what happens."),
+    block("d2","Distractor","Explain what Kubernetes is from the very beginning."),
+    block("d3","Distractor","Use very formal corporate language throughout."),
+    block("d4","Distractor","Add a long disclaimer about not being a certified expert.")
+  ],
+  weakPrompt:"My pod keeps crashing, help.",
+  overEngineeredExtra:true,
+  weakOutput:"Try restarting the pod, or maybe increase the memory resources allocated to it.",
+  optimizedOutput:"Root cause: the JVM's default heap sizing exceeds the 256Mi container limit, triggering OOMKilled.\n1. Set -XX:MaxRAMPercentage=75 in JAVA_OPTS.\n2. Verify with kubectl top pod after redeploy.\n3. Add a readiness probe delay to avoid premature traffic.\n4. Watch kubectl describe pod for further OOM events.",
+  principle:"Including the exact error signal — OOMKilled plus the memory limit — lets the model pinpoint root cause instead of guessing at generic fixes."
+},
+{
+  id:"sd6", title:"Standardizing Commit Messages", type:"choose",
+  desiredOutput:"A team commit-message and PR-description convention compatible with automated semantic-release tooling.",
+  blocks:[
+    block("b1","Role","You are a senior engineer establishing team engineering standards."),
+    block("b2","Context","A team of 8 engineers currently writes inconsistent commit messages, making changelogs hard to generate automatically."),
+    block("b3","Task","Define a commit message and PR description convention the team should adopt."),
+    block("b4","Constraints","Base it on Conventional Commits; it must be compatible with automated semantic-release tooling."),
+    block("b5","Format","Provide the convention as a short spec followed by three example commit messages."),
+    block("d1","Distractor","Make the rules sound inspiring and motivational."),
+    block("d2","Distractor","Cover every edge case that could ever exist."),
+    block("d3","Distractor","Keep it under one sentence total."),
+    block("d4","Distractor","Write it as a rap for team morale.")
+  ],
+  weakPrompt:"Help me write better git commit messages.",
+  overEngineeredExtra:true,
+  weakOutput:"Try to write clear and descriptive commit messages that explain what changed.",
+  optimizedOutput:"Format: type(scope): description\nTypes: feat, fix, chore, docs, refactor\nExamples:\nfeat(auth): add OAuth2 login flow\nfix(cart): resolve rounding error in totals\nchore(ci): bump node version to 20",
+  principle:"Referencing a known standard and naming the downstream tooling constraint yields an adoptable spec instead of vague good-practice advice."
+},
+{
+  id:"sd7", title:"Writing Unit Tests for a Pricing Function", type:"build",
+  desiredOutput:"Behavior-focused Jest test cases for a pricing function, covering normal and edge cases.",
+  blocks:[
+    block("b1","Role","You are a senior QA engineer specializing in test-driven development."),
+    block("b2","Context","The function calculateFinalPrice(cart, coupon, taxRate) applies a coupon discount then tax; edge cases include expired coupons and negative tax rates."),
+    block("b3","Task","Write unit test cases covering normal and edge-case scenarios."),
+    block("b4","Constraints","Use Jest syntax; test only input and output behavior, not implementation details."),
+    block("b5","Format","Output as a list of test case descriptions, each with input values and expected output."),
+    block("d1","Distractor","Write tests for every possible function in the entire codebase."),
+    block("d2","Distractor","Make the tests look impressively professional."),
+    block("d3","Distractor","Include philosophical commentary about the nature of testing."),
+    block("d4","Distractor","Also test the UI layer while you are at it.")
+  ],
+  weakPrompt:"Write tests for my pricing function.",
+  overEngineeredExtra:true,
+  weakOutput:"test(\"it works\", () => { expect(calculateFinalPrice()).toBeDefined(); });",
+  optimizedOutput:"1. Valid coupon + standard tax — cart $100, coupon 10%, tax 8% — expects $97.20\n2. Expired coupon — discount ignored, only tax applied\n3. Negative tax rate — throws ValidationError\n4. Zero-value cart — returns $0 regardless of coupon",
+  principle:"Specifying the testing framework and constraining scope to behavior keeps generated tests maintainable instead of brittle or bloated."
+},
+{
+  id:"sd8", title:"Designing Checkout Microservices", type:"clean",
+  desiredOutput:"A microservices architecture for checkout using an event-driven saga pattern for cross-service consistency.",
+  blocks:[
+    block("b1","Role","You are a distributed systems architect."),
+    block("b2","Context","An e-commerce platform is splitting a monolith; checkout must handle payment, inventory reservation, and order confirmation with eventual consistency across services."),
+    block("b3","Task","Propose a microservices architecture for the checkout flow."),
+    block("b4","Constraints","Use an event-driven saga pattern for cross-service consistency; avoid distributed transactions such as two-phase commit."),
+    block("b5","Format","Describe the services as a bulleted list, then outline the saga steps in order."),
+    block("d1","Distractor","Design a system that scales to a billion users regardless of current need."),
+    block("d2","Distractor","Use the newest trendy technology no matter the fit."),
+    block("d3","Distractor","Make the architecture diagram description very colorful."),
+    block("d4","Distractor","Explain what microservices are from first principles.")
+  ],
+  weakPrompt:"Design microservices for checkout.",
+  overEngineeredExtra:true,
+  weakOutput:"You could have a payment service, inventory service, and order service that talk to each other.",
+  optimizedOutput:"Services: PaymentService, InventoryService, OrderService, NotificationService\nSaga steps:\n1. OrderService creates a pending order, emits OrderCreated.\n2. InventoryService reserves stock, emits StockReserved or StockFailed.\n3. PaymentService charges the customer on StockReserved, emits PaymentSucceeded or Failed.\n4. OrderService confirms the order, or triggers a compensating InventoryRelease on failure.",
+  principle:"Naming the consistency pattern constrains the solution space so the model proposes one coherent, implementable design instead of a generic service list."
+}
+];
+
+/* ---------------- Marketing & Copywriting (5) ---------------- */
+SCENARIOS["Marketing & Copywriting"] = [
+{
+  id:"mk1", title:"Product Launch Email", type:"build",
+  desiredOutput:"A launch email for a new productivity app, tuned to a specific audience and goal.",
+  blocks:[
+    block("b1","Role","You are a direct-response email copywriter for B2B SaaS products."),
+    block("b2","Context","We are launching a productivity app for busy freelancers who currently juggle 3 to 4 separate tools."),
+    block("b3","Task","Write a launch announcement email promoting the new app."),
+    block("b4","Constraints","Keep it under 150 words; lead with the single biggest pain point solved, not a feature list."),
+    block("b5","Format","Provide a subject line, then the email body in three short paragraphs."),
+    block("d1","Distractor","Make it sound like a Fortune 500 press release."),
+    block("d2","Distractor","Use as many exclamation marks as possible."),
+    block("d3","Distractor","Mention every single feature the app has."),
+    block("d4","Distractor","Add a long legal disclaimer at the top.")
+  ],
+  weakPrompt:"Write a launch email for our new app.",
+  overEngineeredExtra:true,
+  weakOutput:"Subject: New App!\nWe are excited to announce our new app. It has many features. Try it today!",
+  optimizedOutput:"Subject: Stop juggling four tools to run your freelance business\nYou didn't start freelancing to become your own IT department. [App] replaces your scattered invoicing, scheduling, and client tracker with one screen.\nJoin the waitlist and get founder pricing for life.",
+  principle:"A named audience pain point plus a length constraint forces the copy to lead with value instead of generic feature listing."
+},
+{
+  id:"mk2", title:"Ad Headline Duel", type:"choose",
+  desiredOutput:"A high-converting headline for a paid ad targeting a specific customer segment.",
+  blocks:[
+    block("b1","Role","You are a performance marketing copywriter specializing in Meta ads."),
+    block("b2","Context","The product is a $40/month meal-planning app targeting time-poor parents of young children."),
+    block("b3","Task","Write five headline variations for a Meta ad."),
+    block("b4","Constraints","Each headline under 40 characters; avoid generic phrases like 'the best' or 'amazing'."),
+    block("b5","Format","Present as a numbered list of five headlines only."),
+    block("d1","Distractor","Try to appeal to literally every demographic at once."),
+    block("d2","Distractor","Include the full pricing breakdown in the headline."),
+    block("d3","Distractor","Write in ALL CAPS for emphasis."),
+    block("d4","Distractor","Add a footnote citing a random statistic.")
+  ],
+  weakPrompt:"Write me some ad headlines for my meal planning app.",
+  overEngineeredExtra:true,
+  weakOutput:"1. The Best Meal Planning App\n2. Amazing Food Planning\n3. Try Our App Today\n4. Great Meal Planner\n5. Awesome App For Meals",
+  optimizedOutput:"1. Dinner, decided by 9am\n2. Skip the 'what's for dinner' fight\n3. Meal plans for parents, not chefs\n4. 15 minutes a week, zero takeout guilt\n5. Your fridge, finally has a plan",
+  principle:"A character limit and a banned-phrase list eliminate generic filler and force specific, audience-relevant hooks."
+},
+{
+  id:"mk3", title:"Landing Page Hero Copy", type:"clean",
+  desiredOutput:"Hero section copy for a landing page that converts visitors into free-trial signups.",
+  blocks:[
+    block("b1","Role","You are a conversion copywriter for developer tools."),
+    block("b2","Context","The product is an API monitoring tool for small engineering teams who currently rely on manual log checking."),
+    block("b3","Task","Write the hero headline and subheadline for the landing page."),
+    block("b4","Constraints","Headline under 8 words; subheadline explains the core outcome, not the mechanism."),
+    block("b5","Format","Output as: Headline, then Subheadline, on separate lines."),
+    block("d1","Distractor","Make it sound futuristic and sci-fi."),
+    block("d2","Distractor","Include a customer testimonial inline."),
+    block("d3","Distractor","Add three emoji per line."),
+    block("d4","Distractor","Explain the entire tech stack used to build it.")
+  ],
+  weakPrompt:"Write hero copy for my API monitoring landing page.",
+  overEngineeredExtra:true,
+  weakOutput:"Headline: The Best API Monitoring Tool Ever\nSubheadline: We monitor your APIs using cutting edge technology and machine learning algorithms.",
+  optimizedOutput:"Headline: Know before your users do\nSubheadline: Get alerted the moment an API breaks — no more finding out from an angry customer.",
+  principle:"A word-count limit on the headline and an outcome-vs-mechanism rule on the subheadline stop the copy from drifting into feature-speak."
+},
+{
+  id:"mk4", title:"Social Caption Set", type:"build",
+  desiredOutput:"A week of Instagram captions for a sustainable coffee brand's new product line.",
+  blocks:[
+    block("b1","Role","You are a social media copywriter for lifestyle brands."),
+    block("b2","Context","The brand sells sustainably-sourced coffee and is launching a new single-origin Ethiopian roast."),
+    block("b3","Task","Write five Instagram captions for launch week, one per day."),
+    block("b4","Constraints","Each caption under 30 words; include one clear call-to-action per caption, never more than one."),
+    block("b5","Format","Present as a numbered list, Day 1 through Day 5."),
+    block("d1","Distractor","Reference unrelated trending memes for engagement."),
+    block("d2","Distractor","Use at least ten hashtags per caption."),
+    block("d3","Distractor","Make every caption exactly the same length."),
+    block("d4","Distractor","Include the full sourcing supply chain in each post.")
+  ],
+  weakPrompt:"Write some Instagram captions for our new coffee.",
+  overEngineeredExtra:true,
+  weakOutput:"1. Check out our new coffee!\n2. New coffee just dropped, try it!\n3. Our coffee is amazing, buy now!",
+  optimizedOutput:"Day 1: Ethiopia, in a cup. Meet our new single-origin roast — link in bio.\nDay 2: Notes of jasmine and stone fruit. This one's different. Shop now.\nDay 3: Farmer-direct, always. Read their story — link in bio.",
+  principle:"A one-CTA-per-post rule and a word cap keep the captions scannable instead of cramming every message into one post."
+},
+{
+  id:"mk5", title:"Brand Tone Guideline Duel", type:"choose",
+  desiredOutput:"A concise brand voice guideline usable by any writer on the team.",
+  blocks:[
+    block("b1","Role","You are a brand strategist defining a written voice guideline."),
+    block("b2","Context","The brand is a fintech app for Gen Z users; current copy feels too corporate and distant."),
+    block("b3","Task","Define the brand's tone of voice for written content."),
+    block("b4","Constraints","Describe tone using three adjectives with a one-line example each; avoid abstract corporate language."),
+    block("b5","Format","Present as three labeled tone pillars with a do/don't example under each."),
+    block("d1","Distractor","Make the guideline sound like a legal document."),
+    block("d2","Distractor","List twenty possible adjectives to choose from."),
+    block("d3","Distractor","Write the guideline as a poem."),
+    block("d4","Distractor","Include unrelated color palette details.")
+  ],
+  weakPrompt:"Define a tone of voice for our fintech brand.",
+  overEngineeredExtra:true,
+  weakOutput:"Our brand should be professional, trustworthy, and modern in all communications.",
+  optimizedOutput:"Direct — Do: 'You'll get $40 back Friday.' Don't: 'Reimbursement processing is underway.'\nWarm — Do: 'Nice, that bill's handled.' Don't: 'Transaction successfully completed.'\nUnbothered — Do: 'Markets dip. Yours don't have to.' Don't: 'Please be advised of market volatility.'",
+  principle:"Pairing each tone word with a concrete do/don't example makes the guideline usable, instead of leaving 'trustworthy' open to interpretation."
+}
+];
+
+/* ---------------- Business & Productivity (5) ---------------- */
+SCENARIOS["Business & Productivity"] = [
+{
+  id:"bp1", title:"Restructuring Meeting Agenda", type:"build",
+  desiredOutput:"A tight agenda for a sensitive team restructuring meeting.",
+  blocks:[
+    block("b1","Role","You are an experienced operations manager facilitating a sensitive team meeting."),
+    block("b2","Context","The team of 12 is being reorganized into two pods; several people are anxious about role changes."),
+    block("b3","Task","Draft a 30-minute meeting agenda to communicate the restructure."),
+    block("b4","Constraints","Reserve at least 10 minutes for open Q&A; avoid jargon like 'synergy' or 'right-sizing'."),
+    block("b5","Format","Present as a timed agenda with minute allocations per item."),
+    block("d1","Distractor","Make the agenda as long and detailed as possible."),
+    block("d2","Distractor","Include unrelated icebreaker games."),
+    block("d3","Distractor","Write it in overly formal legal language."),
+    block("d4","Distractor","Add motivational quotes between agenda items.")
+  ],
+  weakPrompt:"Write an agenda for our team restructuring meeting.",
+  overEngineeredExtra:true,
+  weakOutput:"1. Welcome\n2. Discuss changes\n3. Questions\n4. Close",
+  optimizedOutput:"0:00-0:05 — Why we're restructuring\n0:05-0:15 — New pod structure and who's where\n0:15-0:20 — What stays the same\n0:20-0:30 — Open Q&A",
+  principle:"A protected time block for Q&A and a jargon ban keep a sensitive agenda humane and legible instead of vague and corporate."
+},
+{
+  id:"bp2", title:"SWOT Analysis Cleanup", type:"clean",
+  desiredOutput:"A focused SWOT analysis for a regional bakery chain considering expansion.",
+  blocks:[
+    block("b1","Role","You are a small-business strategy consultant."),
+    block("b2","Context","A regional bakery chain with 6 locations is considering expanding into a neighboring state."),
+    block("b3","Task","Produce a SWOT analysis to inform the expansion decision."),
+    block("b4","Constraints","Limit to 3 bullet points per quadrant; each bullet must be specific to this business, not generic."),
+    block("b5","Format","Present as four labeled quadrants: Strengths, Weaknesses, Opportunities, Threats."),
+    block("d1","Distractor","Include a full 10-year financial forecast."),
+    block("d2","Distractor","Add motivational commentary after each quadrant."),
+    block("d3","Distractor","Make every bullet exactly one word."),
+    block("d4","Distractor","Compare to five unrelated industries.")
+  ],
+  weakPrompt:"Do a SWOT analysis for my bakery chain.",
+  overEngineeredExtra:true,
+  weakOutput:"Strengths: good products. Weaknesses: small team. Opportunities: growth. Threats: competition.",
+  optimizedOutput:"Strengths: Loyal local customer base; consistent recipe quality across locations; low staff turnover.\nWeaknesses: No centralized inventory system; single-state supplier contracts; limited marketing budget.\nOpportunities: Neighboring state has no dominant local bakery brand; growing farmers-market circuit nearby.\nThreats: Rising flour and dairy costs; national chains expanding into the same region.",
+  principle:"A specificity requirement and a bullet cap stop a SWOT from collapsing into generic, interchangeable statements."
+},
+{
+  id:"bp3", title:"OKR Drafting Duel", type:"choose",
+  desiredOutput:"A well-formed quarterly OKR for a customer support team.",
+  blocks:[
+    block("b1","Role","You are a management consultant specializing in OKR frameworks."),
+    block("b2","Context","The customer support team currently has an average first-response time of 6 hours and wants to improve it this quarter."),
+    block("b3","Task","Draft one objective with three key results for the quarter."),
+    block("b4","Constraints","Key results must be measurable numbers, not activities; avoid vague verbs like 'improve' or 'enhance' without a metric."),
+    block("b5","Format","Present as Objective, then three numbered Key Results."),
+    block("d1","Distractor","Include ten key results to be thorough."),
+    block("d2","Distractor","Make the objective sound inspirational above all."),
+    block("d3","Distractor","Add unrelated marketing metrics."),
+    block("d4","Distractor","Write it as a single run-on paragraph.")
+  ],
+  weakPrompt:"Help me write an OKR for my support team.",
+  overEngineeredExtra:true,
+  weakOutput:"Objective: Improve customer support. Key Results: Respond faster, make customers happier, reduce tickets.",
+  optimizedOutput:"Objective: Deliver faster, more reliable customer support\n1. Reduce average first-response time from 6 hours to 2 hours\n2. Increase first-contact resolution rate from 58% to 75%\n3. Reduce ticket backlog from 400 to under 100",
+  principle:"Requiring measurable key results instead of activity verbs is what makes an OKR trackable rather than aspirational fluff."
+},
+{
+  id:"bp4", title:"Delegation Email", type:"build",
+  desiredOutput:"A clear delegation email handing off a recurring report to a direct report.",
+  blocks:[
+    block("b1","Role","You are a manager delegating a recurring task to a direct report."),
+    block("b2","Context","You currently compile a weekly sales report every Friday; you want to hand this off to your analyst, Priya, starting next week."),
+    block("b3","Task","Write an email delegating the weekly report to Priya."),
+    block("b4","Constraints","Specify the exact deadline and data sources; make clear you are available for the first two handoffs."),
+    block("b5","Format","Provide a subject line and a short email body, under 120 words."),
+    block("d1","Distractor","Make the email extremely long to show thoroughness."),
+    block("d2","Distractor","Apologize repeatedly for adding to her workload."),
+    block("d3","Distractor","Include unrelated praise about her wardrobe."),
+    block("d4","Distractor","CC the entire company for visibility.")
+  ],
+  weakPrompt:"Write an email asking Priya to take over the weekly report.",
+  overEngineeredExtra:true,
+  weakOutput:"Subject: Report\nHi Priya, can you start doing the weekly report? Thanks.",
+  optimizedOutput:"Subject: Handing off the weekly sales report starting next Friday\nHi Priya — starting next week, could you own the weekly sales report? It's due Fridays by 5pm, pulling from the CRM export and the Stripe dashboard. I'll walk you through the first two so you have a template to work from after that.",
+  principle:"Naming the exact deadline, data sources, and support window turns a vague ask into a delegation the recipient can actually execute."
+},
+{
+  id:"bp5", title:"Project Status Report Cleanup", type:"clean",
+  desiredOutput:"A concise weekly status update for stakeholders on a delayed software project.",
+  blocks:[
+    block("b1","Role","You are a project manager writing a weekly stakeholder update."),
+    block("b2","Context","The mobile app project is one week behind schedule due to a third-party API delay; the team is still on track for the overall quarter deadline."),
+    block("b3","Task","Write a status update summarizing progress, the delay, and the mitigation plan."),
+    block("b4","Constraints","Lead with the bottom line (on track or at risk) before details; keep it under 150 words."),
+    block("b5","Format","Present as three sections: Status, What Changed, Next Steps."),
+    block("d1","Distractor","Include the full technical root-cause investigation."),
+    block("d2","Distractor","Add blame for which team caused the delay."),
+    block("d3","Distractor","Use excessive corporate buzzwords."),
+    block("d4","Distractor","Attach unrelated budget details.")
+  ],
+  weakPrompt:"Write a status update for my delayed app project.",
+  overEngineeredExtra:true,
+  weakOutput:"The project is a bit delayed because of some issues but we are working on it and should be fine.",
+  optimizedOutput:"Status: On track for the quarter deadline, despite a one-week slip this sprint.\nWhat Changed: A third-party payment API delayed integration testing by one week.\nNext Steps: Running integration testing in parallel with QA next week to recover the buffer; no change to the quarter deadline.",
+  principle:"Leading with the bottom line and separating what changed from what's next lets a busy stakeholder read the one sentence that matters first."
+}
+];
+
+/* ---------------- Creative Writing & Storytelling (5) ---------------- */
+SCENARIOS["Creative Writing & Storytelling"] = [
+{
+  id:"cw1", title:"Short Story Opening Scene", type:"build",
+  desiredOutput:"An opening scene that hooks a reader through concrete sensory detail rather than exposition.",
+  blocks:[
+    block("b1","Role","You are a literary fiction writer known for spare, sensory prose."),
+    block("b2","Context","The story follows a lighthouse keeper who has just discovered the mainland radio has gone silent."),
+    block("b3","Task","Write the opening scene, roughly 150 words."),
+    block("b4","Constraints","Open with action or sensory detail, not backstory; do not explain why the radio is silent yet."),
+    block("b5","Format","Plain prose paragraphs, no dialogue tags needed if no dialogue is used."),
+    block("d1","Distractor","Include a full character biography before the scene."),
+    block("d2","Distractor","Explain the ending in the first paragraph."),
+    block("d3","Distractor","Use as many adjectives as possible."),
+    block("d4","Distractor","Write it as a bulleted outline instead of prose.")
+  ],
+  weakPrompt:"Write a story about a lighthouse keeper.",
+  overEngineeredExtra:true,
+  weakOutput:"There was a lighthouse keeper named Tom who lived alone. One day something strange happened with the radio.",
+  optimizedOutput:"The static came first — a hiss where the six o'clock forecast should have been. Tom turned the dial twice, slow, the way you'd check a pulse. Outside, the light swept its usual arc over black water, indifferent. He set the radio down and did not touch it again for an hour.",
+  principle:"Constraining the opening to sensory action instead of backstory is what creates a hook, since withheld information generates tension."
+},
+{
+  id:"cw2", title:"Character Backstory Cleanup", type:"clean",
+  desiredOutput:"A tight character backstory that only includes details relevant to the character's core conflict.",
+  blocks:[
+    block("b1","Role","You are a novelist developing supporting characters."),
+    block("b2","Context","The character is a retired detective who now refuses to carry a weapon, central to a mystery novel's subplot."),
+    block("b3","Task","Write a backstory explaining why she refuses to carry a weapon."),
+    block("b4","Constraints","Under 120 words; every detail must connect to that specific choice, not general life history."),
+    block("b5","Format","A single tight paragraph."),
+    block("d1","Distractor","Include her entire childhood in detail."),
+    block("d2","Distractor","List her favorite foods and hobbies."),
+    block("d3","Distractor","Add unrelated subplot characters."),
+    block("d4","Distractor","Make it exactly 500 words regardless of content.")
+  ],
+  weakPrompt:"Give my detective character a backstory.",
+  overEngineeredExtra:true,
+  weakOutput:"She grew up in a small town, joined the police force, had a normal career, then retired and moved to the coast.",
+  optimizedOutput:"Eleven years on the force, and the one time her weapon left the holster, it was her partner's blood on the pavement, not a suspect's. The inquiry cleared her. She didn't clear herself. She keeps the badge in a drawer and answers the door unarmed, every time, like a penance nobody asked her to pay.",
+  principle:"A relevance constraint prevents backstory bloat, keeping every detail load-bearing for the specific trait the story needs."
+},
+{
+  id:"cw3", title:"Dialogue Punch-Up Duel", type:"choose",
+  desiredOutput:"A rewritten dialogue exchange that reveals character tension through subtext instead of stated emotion.",
+  blocks:[
+    block("b1","Role","You are a screenwriter specializing in naturalistic dialogue."),
+    block("b2","Context","Two estranged siblings are dividing their late mother's belongings; neither wants to say they're grieving."),
+    block("b3","Task","Rewrite their exchange over who gets the piano."),
+    block("b4","Constraints","No character states their feelings directly; convey grief and tension through subtext and what's left unsaid."),
+    block("b5","Format","Standard screenplay dialogue format, 6 to 10 lines."),
+    block("d1","Distractor","Have characters explicitly announce they are sad."),
+    block("d2","Distractor","Add narration explaining the subtext."),
+    block("d3","Distractor","Include unrelated comic relief."),
+    block("d4","Distractor","Make the dialogue rhyme.")
+  ],
+  weakPrompt:"Write a scene where siblings argue about a piano.",
+  overEngineeredExtra:true,
+  weakOutput:"SIBLING A: I am sad about mom and I want the piano.\nSIBLING B: I am also sad, but I want it more.",
+  optimizedOutput:"A: She never let you touch it anyway.\nB: She let me touch everything. You just weren't around to see it.\nA: (beat) Take the piano.\nB: I don't want it if you're just giving it up.\nA: I'm not giving it up. I'm giving it to you.",
+  principle:"Banning stated emotion forces the model into subtext, which is what makes dialogue feel written rather than explained."
+},
+{
+  id:"cw4", title:"World-Building Rules", type:"build",
+  desiredOutput:"A concise, internally consistent magic system with a clear cost.",
+  blocks:[
+    block("b1","Role","You are a fantasy worldbuilder focused on systems with real costs and limits."),
+    block("b2","Context","The story's magic is tied to memory: casting a spell erases a memory proportional to the spell's power."),
+    block("b3","Task","Define three core rules of this magic system."),
+    block("b4","Constraints","Every rule must include a concrete limitation or cost; avoid open-ended 'anything is possible' language."),
+    block("b5","Format","Present as three numbered rules, one sentence each."),
+    block("d1","Distractor","Make the magic system all-powerful with no limits."),
+    block("d2","Distractor","Include an unrelated map description."),
+    block("d3","Distractor","Write the rules as ancient prophecy verse."),
+    block("d4","Distractor","List fifteen rules instead of three.")
+  ],
+  weakPrompt:"Come up with a magic system for my fantasy story.",
+  overEngineeredExtra:true,
+  weakOutput:"Magic in this world comes from within and can do almost anything the caster wants.",
+  optimizedOutput:"1. Every spell costs a memory; the more powerful the spell, the older and more significant the memory lost.\n2. Memories cannot be chosen — the mind surrenders them at random, never the caster's choice.\n3. Lost memories can be recovered only by another mage willing to give up one of their own in trade.",
+  principle:"Requiring a concrete cost per rule is what makes a magic system feel like a system, rather than a wish-granting device."
+},
+{
+  id:"cw5", title:"Poem in a Specific Style Duel", type:"choose",
+  desiredOutput:"A short poem about insomnia written in a clearly specified form and voice.",
+  blocks:[
+    block("b1","Role","You are a poet working in free verse with concrete imagery."),
+    block("b2","Context","The poem is about insomnia, written from the perspective of someone counting hours rather than sheep."),
+    block("b3","Task","Write an original 8 to 12 line poem on this theme."),
+    block("b4","Constraints","Avoid cliché imagery like counting sheep or staring at ceilings; ground it in one specific concrete image instead."),
+    block("b5","Format","Free verse, no rhyme scheme required."),
+    block("d1","Distractor","Force a strict rhyme scheme regardless of fit."),
+    block("d2","Distractor","Make it exactly a haiku instead of the requested length."),
+    block("d3","Distractor","Include a title page and dedication."),
+    block("d4","Distractor","Write it entirely in the third person about someone else.")
+  ],
+  weakPrompt:"Write a poem about not being able to sleep.",
+  overEngineeredExtra:true,
+  weakOutput:"I cannot sleep at night, I count the sheep, I stare at the ceiling, thinking deep.",
+  optimizedOutput:"Three-fourteen, and the fridge hums its one note\nlike it's the only thing in the house still working.\nI have memorized the crack in the plaster,\nthe shape it makes like a river\nthat goes nowhere, same as me,\nawake, doing the math on how few hours are left\nto not have this conversation with myself again.",
+  principle:"Banning the obvious clichés and requiring one concrete image forces original imagery instead of the first thing a model reaches for."
+}
+];
+
+/* ---------------- Education & Learning (5) ---------------- */
+SCENARIOS["Education & Learning"] = [
+{
+  id:"ed1", title:"Lesson Plan on Photosynthesis", type:"build",
+  desiredOutput:"A 45-minute middle school lesson plan on photosynthesis with a hands-on component.",
+  blocks:[
+    block("b1","Role","You are a middle school science teacher planning an engaging lesson."),
+    block("b2","Context","The class is 7th grade, 45 minutes, with access to basic lab supplies but no advanced equipment."),
+    block("b3","Task","Create a lesson plan teaching the basics of photosynthesis."),
+    block("b4","Constraints","Include one hands-on activity under 15 minutes; avoid relying purely on lecture."),
+    block("b5","Format","Present as timed sections: Hook, Direct Instruction, Activity, Wrap-up."),
+    block("d1","Distractor","Cover the entire Calvin cycle in full biochemical detail."),
+    block("d2","Distractor","Make it a two-hour lesson regardless of the time limit."),
+    block("d3","Distractor","Skip any student interaction."),
+    block("d4","Distractor","Include unrelated trivia about unrelated plants.")
+  ],
+  weakPrompt:"Make a lesson plan about photosynthesis.",
+  overEngineeredExtra:true,
+  weakOutput:"Teach students about photosynthesis using a lecture and then give them a worksheet.",
+  optimizedOutput:"Hook (5 min): Ask why a plant in a dark closet turns yellow.\nDirect Instruction (10 min): Explain sunlight, water, and CO2 as inputs, glucose and oxygen as outputs.\nActivity (15 min): Students place leaves in bags with a straw, observe condensation and gas over the period.\nWrap-up (10 min): Students diagram the process in their own words on an exit ticket.",
+  principle:"A time constraint and a hands-on requirement force an active lesson structure instead of a lecture-and-worksheet default."
+},
+{
+  id:"ed2", title:"Quiz Generation Cleanup", type:"clean",
+  desiredOutput:"A short quiz on the American Revolution with answer variety and no ambiguous questions.",
+  blocks:[
+    block("b1","Role","You are a history teacher writing formative assessment questions."),
+    block("b2","Context","The quiz covers the causes of the American Revolution for a 10th grade U.S. history class."),
+    block("b3","Task","Write a 5-question quiz on this topic."),
+    block("b4","Constraints","Mix question types (multiple choice and short answer); avoid trick questions or double negatives."),
+    block("b5","Format","Number each question, mark the type, and include the answer key at the end."),
+    block("d1","Distractor","Make every question multiple choice with five options."),
+    block("d2","Distractor","Include unrelated questions about the Civil War."),
+    block("d3","Distractor","Write questions designed to trick students."),
+    block("d4","Distractor","Skip the answer key entirely.")
+  ],
+  weakPrompt:"Make a quiz about the American Revolution.",
+  overEngineeredExtra:true,
+  weakOutput:"1. When was the American Revolution? 2. Who was involved? 3. Why did it happen?",
+  optimizedOutput:"1. (MC) Which act taxed printed materials in the colonies? a) Stamp Act b) Homestead Act c) Navigation Act d) Embargo Act\n2. (Short Answer) Explain one reason colonists objected to 'taxation without representation.'\n3. (MC) The Boston Tea Party was a protest against which company's tea monopoly?\nAnswer Key: 1-a, 2-see rubric, 3-British East India Company",
+  principle:"Banning trick questions and requiring a mixed format produces a fair, usable assessment instead of ambiguous filler questions."
+},
+{
+  id:"ed3", title:"Explaining Recursion via Analogy Duel", type:"choose",
+  desiredOutput:"A beginner-friendly explanation of recursion using a single consistent analogy.",
+  blocks:[
+    block("b1","Role","You are a computer science tutor explaining concepts to complete beginners."),
+    block("b2","Context","The student has never programmed before and is confused by the idea of a function calling itself."),
+    block("b3","Task","Explain recursion using one real-world analogy."),
+    block("b4","Constraints","Use exactly one analogy throughout, do not mix metaphors; keep it under 100 words."),
+    block("b5","Format","One short paragraph, plain language, no code."),
+    block("d1","Distractor","Include the full formal mathematical definition first."),
+    block("d2","Distractor","Mix in three different unrelated analogies."),
+    block("d3","Distractor","Write it as dense academic prose."),
+    block("d4","Distractor","Include a full code example with edge cases.")
+  ],
+  weakPrompt:"Explain recursion to a beginner.",
+  overEngineeredExtra:true,
+  weakOutput:"Recursion is when a function calls itself. It has a base case and a recursive case, like in mathematics.",
+  optimizedOutput:"Imagine looking into two mirrors facing each other — each reflection contains a smaller reflection inside it, until it gets too small to see. Recursion works the same way: a function keeps calling a smaller version of itself, until it hits a version so small there's nothing left to reflect, and everything reflects back up to the answer.",
+  principle:"Locking the explanation to one consistent analogy prevents the cognitive overload of switching metaphors mid-explanation."
+},
+{
+  id:"ed4", title:"Grading Rubric Creation", type:"build",
+  desiredOutput:"A clear, criterion-based rubric for a persuasive essay assignment.",
+  blocks:[
+    block("b1","Role","You are a high school English teacher designing a fair grading rubric."),
+    block("b2","Context","The assignment is a 2-page persuasive essay for 9th graders on a topic of their choice."),
+    block("b3","Task","Create a grading rubric for the essay."),
+    block("b4","Constraints","Use 4 criteria with 4 performance levels each; avoid subjective language like 'good' without describing what makes it good."),
+    block("b5","Format","Present as a table with criteria as rows and performance levels as columns."),
+    block("d1","Distractor","Add ten criteria to be extremely thorough."),
+    block("d2","Distractor","Use only pass or fail as the levels."),
+    block("d3","Distractor","Include unrelated grammar rules as a footnote."),
+    block("d4","Distractor","Make the rubric a single paragraph instead of a table.")
+  ],
+  weakPrompt:"Make a rubric for a persuasive essay.",
+  overEngineeredExtra:true,
+  weakOutput:"Grade the essay on writing quality, structure, and grammar, from 1 to 4.",
+  optimizedOutput:"Claim & Evidence: 4-Clear claim, 3 strong pieces of evidence | 3-Clear claim, 2 pieces of evidence | 2-Vague claim, 1 piece of evidence | 1-No clear claim\nOrganization: 4-Logical flow throughout | 3-Mostly logical | 2-Some disorganization | 1-Difficult to follow\n(Counter-argument and Mechanics rows follow the same structure.)",
+  principle:"Requiring described performance levels instead of a bare number scale is what makes a rubric usable for consistent grading."
+},
+{
+  id:"ed5", title:"Study Guide Cleanup", type:"clean",
+  desiredOutput:"A focused exam study guide covering only the highest-weight topics.",
+  blocks:[
+    block("b1","Role","You are a tutor helping a student prepare for a cumulative final exam."),
+    block("b2","Context","The exam covers a semester of introductory chemistry; the syllabus states stoichiometry and thermochemistry are 60% of the exam weight."),
+    block("b3","Task","Create a study guide prioritizing exam weight."),
+    block("b4","Constraints","Allocate study guide space proportionally to exam weight; do not give every topic equal coverage."),
+    block("b5","Format","Present as sections ordered by weight, with the highest-weight topic first and most detail."),
+    block("d1","Distractor","Cover every topic from the entire semester equally."),
+    block("d2","Distractor","Include unrelated topics from next semester's course."),
+    block("d3","Distractor","Make the guide exactly one page regardless of content needed."),
+    block("d4","Distractor","Add motivational quotes between sections.")
+  ],
+  weakPrompt:"Make me a study guide for my chemistry final.",
+  overEngineeredExtra:true,
+  weakOutput:"Review atoms, bonding, reactions, gases, and thermochemistry equally before the exam.",
+  optimizedOutput:"Stoichiometry (35%): Mole ratios, limiting reactants, percent yield — practice 5 problems minimum.\nThermochemistry (25%): Hess's Law, calorimetry, enthalpy sign conventions.\nBonding (15%): Ionic vs covalent, Lewis structures.\nGases & Solutions (25% combined): Ideal gas law, molarity — lighter review, formula sheet only.",
+  principle:"Weighting study time by actual exam weight prevents wasted effort on low-value topics — a prompt without that constraint treats everything as equally important."
+}
+];
+
+/* ======================================================================
+   STATE
+   ====================================================================== */
+let state = null;
+
+function freshState(domain, difficulty){
+  return {
+    domain: domain,
+    difficulty: difficulty,
+    scenarios: [],
+    idx: 0,
+    totalScore: 0,
+    perScenario: [],
+    hintsBudgetTotal: difficulty==="Beginner"?10:(difficulty==="Intermediate"?6:3),
+    hintsUsedTotal: 0,
+    wrongPlacementsTotal: 0,
+    movesTotal: 0,
+    startTime: null,
+    scenarioStartTime: null,
+    totalTimeMs: 0,
+    dna: {
+      clarity:{correct:0,total:0},
+      context:{correct:0,total:0},
+      constraints:{correct:0,total:0},
+      structure:{correct:0,total:0}
+    },
+    current: null // holds transient challenge-specific interaction state
+  };
+}
+
+/* ======================================================================
+   UTIL
+   ====================================================================== */
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    const t=a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+function pick(arr,n){ return shuffle(arr).slice(0, Math.min(n, arr.length)); }
+function clamp(v,lo,hi){ return Math.max(lo, Math.min(hi, v)); }
+function fmtTime(ms){
+  const s = Math.floor(ms/1000);
+  const m = Math.floor(s/60);
+  const r = s%60;
+  return m + ":" + (r<10?"0":"") + r;
+}
+function catToDim(cat){
+  if(cat==="Role" || cat==="Task") return "clarity";
+  if(cat==="Context") return "context";
+  if(cat==="Constraints") return "constraints";
+  if(cat==="Format") return "structure";
+  return null;
+}
+function escapeHtml(s){
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function toast(msg, kind){
+  const wrap = document.getElementById("toast-wrap");
+  const el = document.createElement("div");
+  el.className = "toast " + (kind||"info");
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(()=>{ if(el.parentNode) el.parentNode.removeChild(el); }, 2700);
+}
+function scorePop(x,y,text){
+  const el = document.createElement("div");
+  el.className = "score-pop";
+  el.textContent = text;
+  el.style.left = x+"px";
+  el.style.top = y+"px";
+  document.body.appendChild(el);
+  setTimeout(()=>{ if(el.parentNode) el.parentNode.removeChild(el); }, 1000);
+}
+
+/* ======================================================================
+   SETUP SCREEN
+   ====================================================================== */
+let setupSel = { domain:"Software Development", difficulty:"Advanced" };
+
+function renderSetup(){
+  const dRow = document.getElementById("domain-row");
+  dRow.innerHTML = "";
+  DOMAINS.forEach(d=>{
+    const b = document.createElement("button");
+    b.className = "opt-chip" + (d===setupSel.domain?" sel":"");
+    b.textContent = d;
+    b.onclick = ()=>{ setupSel.domain = d; renderSetup(); };
+    dRow.appendChild(b);
+  });
+  const fRow = document.getElementById("difficulty-row");
+  fRow.innerHTML = "";
+  DIFFICULTIES.forEach(f=>{
+    const b = document.createElement("button");
+    b.className = "opt-chip" + (f===setupSel.difficulty?" sel":"");
+    b.textContent = f;
+    b.onclick = ()=>{ setupSel.difficulty = f; renderSetup(); };
+    fRow.appendChild(b);
+  });
+  document.getElementById("start-btn").disabled = !(setupSel.domain && setupSel.difficulty);
+}
+
+document.getElementById("start-btn").addEventListener("click", function(){
+  startGame(setupSel.domain, setupSel.difficulty);
+});
+
+function startGame(domain, difficulty){
+  state = freshState(domain, difficulty);
+  const pool = SCENARIOS[domain] || SCENARIOS["Software Development"];
+  const count = clamp(pool.length, 6, 8);
+  state.scenarios = pick(pool, count);
+  state.startTime = Date.now();
+  document.getElementById("screen-setup").classList.add("hide");
+  document.getElementById("screen-report").classList.add("hide");
+  document.getElementById("screen-game").classList.remove("hide");
+  loadScenario(0);
+}
+
+/* ======================================================================
+   GAME SCREEN — HUD
+   ====================================================================== */
+function updateHud(){
+  const total = state.scenarios.length;
+  document.getElementById("progress-bar").style.width = ((state.idx)/total*100) + "%";
+  document.getElementById("scenario-counter").textContent = "Scenario " + Math.min(state.idx+1,total) + " / " + total;
+  document.getElementById("hud-score").textContent = Math.round(state.totalScore);
+  const attempted = state.perScenario.length;
+  const acc = attempted>0 ? Math.round(state.perScenario.reduce((s,p)=>s+p.accuracyPct,0)/attempted) : 100;
+  document.getElementById("hud-accuracy").textContent = acc + "%";
+  document.getElementById("hud-moves").textContent = state.movesTotal;
+  document.getElementById("hud-wrong").textContent = state.wrongPlacementsTotal;
+  document.getElementById("hud-hints").textContent = state.hintsUsedTotal + "/" + state.hintsBudgetTotal;
+  document.getElementById("hud-time").textContent = fmtTime(Date.now() - state.startTime);
+}
+let hudTimer = setInterval(()=>{ if(state && document.getElementById("screen-game").classList.contains("hide")===false){ updateHud(); } }, 1000);
+
+/* ======================================================================
+   LOAD SCENARIO
+   ====================================================================== */
+function loadScenario(i){
+  state.idx = i;
+  const sc = state.scenarios[i];
+  state.scenarioStartTime = Date.now();
+  state.current = {
+    scenario: sc,
+    moves:0, wrongPlacements:0, hintsUsed:0,
+    // build state
+    placed: [], // array of block ids placed in order
+    poolIds: [],
+    // clean state
+    removedIds: {}, // id -> true if removed
+    // choose state
+    pickedIndex: null,
+    submitted:false
+  };
+
+  document.getElementById("next-btn").classList.add("hide");
+  document.getElementById("submit-btn").classList.remove("hide");
+  document.getElementById("submit-btn").disabled = false;
+  document.getElementById("hint-btn").disabled = false;
+  document.getElementById("feedback-mount").innerHTML = "";
+  document.getElementById("term-title").textContent = "challenge_" + (i+1) + ".run — " + sc.type;
+
+  renderChallenge();
+  updateHud();
+}
+
+function distractorCountForDifficulty(){
+  if(state.difficulty==="Beginner") return 2;
+  if(state.difficulty==="Intermediate") return 3;
+  return 4;
+}
+
+function currentBlocksSubset(sc){
+  const correct = sc.blocks.filter(b=>b.cat!=="Distractor");
+  const distractors = sc.blocks.filter(b=>b.cat==="Distractor");
+  const dCount = Math.min(distractorCountForDifficulty(), distractors.length);
+  return correct.concat(pick(distractors, dCount));
+}
+
+/* ======================================================================
+   RENDER CHALLENGE (dispatch)
+   ====================================================================== */
+function renderChallenge(){
+  const sc = state.current.scenario;
+  const mount = document.getElementById("challenge-mount");
+  const typeLabel = sc.type==="build" ? "Build the Prompt" : (sc.type==="clean" ? "Clean the Prompt" : "Choose the Best Prompt");
+  const typeClass = sc.type==="build" ? "" : (sc.type==="clean" ? "clean" : "choose");
+
+  let html = "";
+  html += '<span class="chal-type '+typeClass+'">'+typeLabel+'</span>';
+  html += '<h2 class="scen-title">'+escapeHtml(sc.title)+'</h2>';
+  html += '<div class="desired-box"><div class="lbl">🎯 Desired output</div><p>'+escapeHtml(sc.desiredOutput)+'</p></div>';
+
+  if(sc.type==="build"){
+    html += renderBuildHtml(sc);
+  } else if(sc.type==="clean"){
+    html += renderCleanHtml(sc);
+  } else {
+    html += renderChooseHtml(sc);
+  }
+  mount.innerHTML = html;
+
+  if(sc.type==="build") wireBuild(sc);
+  if(sc.type==="clean") wireClean(sc);
+  if(sc.type==="choose") wireChoose(sc);
+}
+
+/* ---------------- BUILD ---------------- */
+function renderBuildHtml(sc){
+  state.current.poolIds = shuffle(currentBlocksSubset(sc).map(b=>b.id));
+  return '<p class="scen-desc">Drag the blocks that belong in an effective prompt into the assembly zone on the right, in a sensible order (role → context → task → constraints → format). Leave the noise behind.</p>'+
+    '<div class="build-layout">'+
+      '<div class="pool" id="pool-zone"><div class="pane-label">block pool</div><div id="pool-blocks"></div></div>'+
+      '<div class="dropzone" id="drop-zone"><div class="pane-label">your prompt assembly</div><div id="drop-blocks"></div><div class="empty-hint" id="drop-empty">drag blocks here →</div></div>'+
+    '</div>';
+}
+function blockEl(b, draggable){
+  const el = document.createElement("div");
+  el.className = "block";
+  el.setAttribute("data-cat", b.cat);
+  el.setAttribute("data-id", b.id);
+  el.draggable = !!draggable;
+  el.tabIndex = 0;
+  el.innerHTML = '<span class="cat-tag">'+b.cat+'</span><div>'+escapeHtml(b.text)+'</div>';
+  return el;
+}
+function findBlock(sc, id){ return sc.blocks.find(b=>b.id===id); }
+
+function wireBuild(sc){
+  const poolEl = document.getElementById("pool-blocks");
+  const dropEl = document.getElementById("drop-blocks");
+  const dropZone = document.getElementById("drop-zone");
+  const emptyHint = document.getElementById("drop-empty");
+
+  function refresh(){
+    poolEl.innerHTML = "";
+    state.current.poolIds.forEach(id=>{
+      const b = findBlock(sc, id);
+      const el = blockEl(b, true);
+      el.addEventListener("dragstart", e=>{ e.dataTransfer.setData("text/plain", id); el.classList.add("dragging"); });
+      el.addEventListener("dragend", ()=> el.classList.remove("dragging"));
+      el.addEventListener("click", ()=>{ // click-to-place fallback (touch)
+        placeBlock(id);
+      });
+      poolEl.appendChild(el);
+    });
+    dropEl.innerHTML = "";
+    state.current.placed.forEach((id,i)=>{
+      const b = findBlock(sc, id);
+      const el = blockEl(b, false);
+      const num = document.createElement("span");
+      num.className = "slot-num";
+      num.textContent = (i+1)+".";
+      el.insertBefore(num, el.firstChild);
+      const x = document.createElement("div");
+      x.className = "remove-x";
+      x.textContent = "✕";
+      x.onclick = (e)=>{ e.stopPropagation(); removeBlock(id); };
+      el.appendChild(x);
+      dropEl.appendChild(el);
+    });
+    emptyHint.style.display = state.current.placed.length ? "none" : "block";
+  }
+
+  function placeBlock(id){
+    if(state.current.submitted) return;
+    const b = findBlock(sc, id);
+    state.current.poolIds = state.current.poolIds.filter(x=>x!==id);
+    state.current.placed.push(id);
+    state.current.moves++;
+    if(b.cat==="Distractor"){
+      state.current.wrongPlacements++;
+      state.wrongPlacementsTotal++;
+      toast("That block adds noise, not signal", "neg");
+      dropZone.classList.add("shake");
+      setTimeout(()=>dropZone.classList.remove("shake"), 350);
+    } else {
+      toast("Added: "+b.cat, "pos");
+    }
+    state.movesTotal++;
+    refresh();
+    updateHud();
+  }
+  function removeBlock(id){
+    if(state.current.submitted) return;
+    state.current.placed = state.current.placed.filter(x=>x!==id);
+    state.current.poolIds.push(id);
+    refresh();
+  }
+
+  dropZone.addEventListener("dragover", e=>{ e.preventDefault(); dropZone.classList.add("dragover"); });
+  dropZone.addEventListener("dragleave", ()=> dropZone.classList.remove("dragover"));
+  dropZone.addEventListener("drop", e=>{
+    e.preventDefault();
+    dropZone.classList.remove("dragover");
+    const id = e.dataTransfer.getData("text/plain");
+    if(id && state.current.poolIds.includes(id)) placeBlock(id);
+  });
+
+  refresh();
+}
+
+/* ---------------- CLEAN ---------------- */
+function renderCleanHtml(sc){
+  const blocks = currentBlocksSubset(sc);
+  state.current.cleanBlocks = shuffle(blocks.map(b=>b.id));
+  return '<p class="scen-desc">This prompt is cluttered. Click every chip that is redundant, vague, or unnecessary to remove it — leave only what an optimized prompt truly needs.</p>'+
+    '<div class="clean-prompt-box" id="clean-box"></div>'+
+    '<div class="clean-hint">'+state.current.cleanBlocks.length+' fragments loaded · click to strike through / remove</div>';
+}
+function wireClean(sc){
+  const box = document.getElementById("clean-box");
+  function refresh(){
+    box.innerHTML = "";
+    state.current.cleanBlocks.forEach(id=>{
+      const b = findBlock(sc, id);
+      const chip = document.createElement("div");
+      chip.className = "chip" + (state.current.removedIds[id] ? " removed":"");
+      chip.setAttribute("tabindex","0");
+      chip.textContent = b.text;
+      chip.onclick = ()=>{
+        if(state.current.submitted) return;
+        state.current.moves++;
+        state.movesTotal++;
+        const willRemove = !state.current.removedIds[id];
+        state.current.removedIds[id] = willRemove;
+        if(willRemove){
+          if(b.cat==="Distractor"){ toast("Correctly cut: noise removed", "pos"); }
+          else { state.current.wrongPlacements++; state.wrongPlacementsTotal++; toast("That was essential — you cut too much", "neg"); }
+        }
+        refresh();
+        updateHud();
+      };
+      box.appendChild(chip);
+    });
+  }
+  refresh();
+}
+
+/* ---------------- CHOOSE ---------------- */
+function renderChooseHtml(sc){
+  const options = shuffle([
+    {kind:"weak", text: sc.weakPrompt},
+    {kind:"optimized", text: buildOptimizedPromptText(sc)},
+    {kind:"overengineered", text: buildOverEngineeredPromptText(sc)}
+  ]);
+  state.current.chooseOptions = options;
+  let html = '<p class="scen-desc">Three engineers wrote three different prompts for the same task. Pick the one most likely to reliably produce the desired output.</p><div class="choose-grid" id="choose-grid">';
+  options.forEach((o,i)=>{
+    html += '<div class="choice-card" data-i="'+i+'" tabindex="0"><div class="choice-label">Prompt '+String.fromCharCode(65+i)+'</div><div class="choice-text">'+escapeHtml(o.text)+'</div></div>';
+  });
+  html += "</div>";
+  return html;
+}
+function wireChoose(sc){
+  const cards = document.querySelectorAll("#choose-grid .choice-card");
+  cards.forEach(c=>{
+    c.addEventListener("click", ()=>{
+      if(state.current.submitted) return;
+      cards.forEach(x=>x.classList.remove("picked"));
+      c.classList.add("picked");
+      state.current.pickedIndex = parseInt(c.getAttribute("data-i"),10);
+      state.current.moves = 1;
+      state.movesTotal++;
+    });
+  });
+}
+
+/* ======================================================================
+   PROMPT TEXT BUILDERS
+   ====================================================================== */
+function buildOptimizedPromptText(sc){
+  const order = ["Role","Context","Task","Constraints","Format"];
+  const correct = sc.blocks.filter(b=>b.cat!=="Distractor");
+  return order.map(cat=>{
+    const b = correct.find(x=>x.cat===cat);
+    return b ? b.text : "";
+  }).filter(Boolean).join(" ");
+}
+function buildOverEngineeredPromptText(sc){
+  const base = buildOptimizedPromptText(sc);
+  const distractors = sc.blocks.filter(b=>b.cat==="Distractor").map(b=>b.text);
+  return base + " " + distractors.join(" ");
+}
+
+/* ======================================================================
+   HINTS
+   ====================================================================== */
+document.getElementById("hint-btn").addEventListener("click", function(){
+  if(!state || !state.current || state.current.submitted) return;
+  if(state.hintsUsedTotal >= state.hintsBudgetTotal){
+    toast("No hints left this run", "neg");
+    return;
+  }
+  const sc = state.current.scenario;
+  state.hintsUsedTotal++;
+  state.current.hintsUsed++;
+  if(sc.type==="build"){
+    const missing = sc.blocks.filter(b=>b.cat!=="Distractor" && !state.current.placed.includes(b.id));
+    if(missing.length){
+      toast("Hint: try the "+missing[0].cat+" block next", "info");
+    } else {
+      toast("Hint: remove any red Distractor blocks you placed", "info");
+    }
+  } else if(sc.type==="clean"){
+    const notRemoved = sc.blocks.filter(b=>b.cat==="Distractor" && !state.current.removedIds[b.id]);
+    if(notRemoved.length){
+      toast("Hint: one fragment is just filler with no real instruction", "info");
+    } else {
+      toast("Hint: make sure every kept fragment states a role, context, task, constraint or format", "info");
+    }
+  } else {
+    toast("Hint: the best prompt is specific but never bloated with flattery or urgency", "info");
+  }
+  updateHud();
+});
+
+/* ======================================================================
+   SUBMIT / SCORING
+   ====================================================================== */
+document.getElementById("submit-btn").addEventListener("click", function(){
+  if(!state || !state.current || state.current.submitted) return;
+  const sc = state.current.scenario;
+  const cur = state.current;
+  cur.submitted = true;
+
+  const timeMs = Date.now() - state.scenarioStartTime;
+  state.totalTimeMs += timeMs;
+  const softTarget = state.difficulty==="Beginner" ? 999999 : (state.difficulty==="Intermediate" ? 90000 : 60000);
+
+  let result = { accuracyPct:0, points:0, good:false };
+
+  if(sc.type==="build"){
+    result = scoreBuild(sc, cur, timeMs, softTarget);
+  } else if(sc.type==="clean"){
+    result = scoreClean(sc, cur, timeMs, softTarget);
+  } else {
+    result = scoreChoose(sc, cur, timeMs, softTarget);
+  }
+
+  state.totalScore += result.points;
+  state.perScenario.push({ id: sc.id, accuracyPct: result.accuracyPct, points: result.points });
+
+  document.getElementById("submit-btn").disabled = true;
+  document.getElementById("hint-btn").disabled = true;
+  document.getElementById("next-btn").classList.remove("hide");
+
+  renderFeedback(sc, result);
+  toast((result.good? "+" : "") + Math.round(result.points) + " pts", result.good ? "pos" : "neg");
+  updateHud();
+});
+
+function bumpDna(dim, correct){
+  if(!dim) return;
+  state.dna[dim].total++;
+  if(correct) state.dna[dim].correct++;
+}
+
+function scoreBuild(sc, cur, timeMs, softTarget){
+  const correctBlocks = sc.blocks.filter(b=>b.cat!=="Distractor");
+  const placedCorrectInOrder = [];
+  let correctCount = 0;
+  cur.placed.forEach(id=>{
+    const b = findBlock(sc, id);
+    if(b.cat!=="Distractor"){ correctCount++; placedCorrectInOrder.push(b.cat); }
+  });
+  const orderRef = ["Role","Context","Task","Constraints","Format"].filter(c=>placedCorrectInOrder.includes(c));
+  const isOrdered = JSON.stringify(placedCorrectInOrder) === JSON.stringify(orderRef);
+
+  correctBlocks.forEach(b=>{
+    const placed = cur.placed.includes(b.id);
+    bumpDna(catToDim(b.cat), placed);
+  });
+
+  const accuracyPct = Math.round((correctCount / correctBlocks.length) * 100);
+  let pts = (correctCount / correctBlocks.length) * 70;
+  pts -= cur.wrongPlacements * 5;
+  if(isOrdered && correctCount===correctBlocks.length) pts += 10;
+  pts -= cur.hintsUsed * 10;
+  if(timeMs <= softTarget) pts += 15;
+  if(cur.wrongPlacements===0 && cur.hintsUsed===0 && correctCount===correctBlocks.length) pts += 15;
+  pts = clamp(pts, 0, 115);
+  return { accuracyPct: accuracyPct, points: pts, good: accuracyPct>=70 };
+}
+
+function scoreClean(sc, cur, timeMs, softTarget){
+  const blocksInPlay = currentBlocksSubset(sc).map(b=>b.id).map(id=>findBlock(sc,id));
+  let correctActions = 0, total = blocksInPlay.length;
+  blocksInPlay.forEach(b=>{
+    const removed = !!cur.removedIds[b.id];
+    const shouldRemove = b.cat==="Distractor";
+    const isCorrectAction = removed === shouldRemove;
+    if(isCorrectAction) correctActions++;
+    if(b.cat==="Distractor"){
+      bumpDna("clarity", isCorrectAction); // treat noise-spotting as part of clarity/efficiency
+    } else {
+      bumpDna(catToDim(b.cat), isCorrectAction);
+    }
+  });
+  const accuracyPct = Math.round((correctActions/total)*100);
+  let pts = (correctActions/total) * 70;
+  pts -= cur.wrongPlacements * 5;
+  pts -= cur.hintsUsed * 10;
+  if(timeMs <= softTarget) pts += 15;
+  if(accuracyPct===100 && cur.hintsUsed===0) pts += 15;
+  pts = clamp(pts, 0, 115);
+  return { accuracyPct: accuracyPct, points: pts, good: accuracyPct>=70 };
+}
+
+function scoreChoose(sc, cur, timeMs, softTarget){
+  const options = cur.chooseOptions;
+  const pickedKind = cur.pickedIndex!==null ? options[cur.pickedIndex].kind : null;
+  const correct = pickedKind==="optimized";
+  const partial = pickedKind==="overengineered";
+  bumpDna("clarity", correct);
+  const accuracyPct = correct ? 100 : (partial ? 40 : 0);
+  let pts = correct ? 70 : (partial ? 25 : 5);
+  pts -= cur.hintsUsed * 10;
+  if(timeMs <= softTarget) pts += 15;
+  if(correct && cur.hintsUsed===0) pts += 15;
+  pts = clamp(pts, 0, 115);
+  return { accuracyPct: accuracyPct, points: pts, good: correct };
+}
+
+/* ======================================================================
+   FEEDBACK PANEL
+   ====================================================================== */
+function renderFeedback(sc, result){
+  const mount = document.getElementById("feedback-mount");
+  const goodClass = result.good ? "good" : "bad";
+  let html = '<div class="feedback '+goodClass+'">';
+  html += '<div class="fb-row"><span class="fb-badge '+goodClass+'">'+(result.good?"Strong":"Needs work")+'</span><span style="font-family:var(--mono);font-size:13px;color:var(--text-2);">'+result.accuracyPct+'% accuracy on this challenge</span></div>';
+
+  if(sc.type==="choose"){
+    const cards = document.querySelectorAll("#choose-grid .choice-card");
+    cards.forEach((c,i)=>{
+      const kind = state.current.chooseOptions[i].kind;
+      c.classList.remove("picked");
+      if(kind==="optimized") c.classList.add("correct-reveal");
+      else if(i===state.current.pickedIndex) c.classList.add("wrong-reveal");
+    });
+  }
+
+  html += '<div class="compare-grid">'+
+    '<div class="compare-card weak"><div class="lbl">Weak prompt → output</div><pre>'+escapeHtml(sc.weakOutput)+'</pre></div>'+
+    '<div class="compare-card opt"><div class="lbl">Optimized prompt → output</div><pre>'+escapeHtml(sc.optimizedOutput)+'</pre></div>'+
+  '</div>';
+
+  html += '<div class="principle-box"><div class="lbl">Prompt principle</div><p>'+escapeHtml(sc.principle)+'</p></div>';
+  html += '</div>';
+  mount.innerHTML = html;
+}
+
+/* ======================================================================
+   NEXT / REPORT
+   ====================================================================== */
+document.getElementById("next-btn").addEventListener("click", function(){
+  if(state.idx + 1 < state.scenarios.length){
+    loadScenario(state.idx + 1);
+  } else {
+    showReport();
+  }
+});
+
+function showReport(){
+  document.getElementById("screen-game").classList.add("hide");
+  document.getElementById("screen-report").classList.remove("hide");
+
+  const total = state.scenarios.length;
+  const avgRaw = state.perScenario.reduce((s,p)=>s+p.points,0) / total;
+  const promptScore = Math.round(clamp(avgRaw, 0, 100));
+
+  let rating, rank;
+  if(promptScore>=90){ rating="🏆 Prompt Architect"; rank="Top tier — your prompts are production-ready."; }
+  else if(promptScore>=75){ rating="⭐ AI Whisperer"; rank="Strong grasp — a little polish from mastery."; }
+  else if(promptScore>=60){ rating="🔧 Prompt Practitioner"; rank="Solid fundamentals, room to sharpen constraints."; }
+  else if(promptScore>=40){ rating="🌱 Prompt Apprentice"; rank="You know the parts — now practice assembling them fast."; }
+  else { rating="🔰 Prompt Novice"; rank="Everyone starts here — replay to build pattern recognition."; }
+
+  document.getElementById("report-score").textContent = promptScore;
+  document.getElementById("report-rating").textContent = rating;
+  document.getElementById("report-rank").textContent = rank;
+
+  // DNA
+  const dims = [
+    {key:"clarity", label:"Clarity"},
+    {key:"context", label:"Context"},
+    {key:"constraints", label:"Constraints"},
+    {key:"structure", label:"Structure"}
+  ];
+  const globalEfficiency = clamp(100 - state.hintsUsedTotal*8 - state.wrongPlacementsTotal*5, 0, 100);
+  let dnaHtml = "";
+  dims.forEach(d=>{
+    const rec = state.dna[d.key];
+    const pct = rec.total>0 ? Math.round((rec.correct/rec.total)*100) : 50;
+    dnaHtml += '<div class="dna-row"><div class="dna-lbl"><span>'+d.label+'</span><span>'+pct+'%</span></div><div class="dna-track"><div class="dna-fill" style="width:'+pct+'%"></div></div></div>';
+  });
+  dnaHtml += '<div class="dna-row"><div class="dna-lbl"><span>Efficiency</span><span>'+globalEfficiency+'%</span></div><div class="dna-track"><div class="dna-fill" style="width:'+globalEfficiency+'%"></div></div></div>';
+  document.getElementById("dna-mount").innerHTML = dnaHtml;
+
+  const avgAcc = Math.round(state.perScenario.reduce((s,p)=>s+p.accuracyPct,0)/total);
+  document.getElementById("metric-mount").innerHTML =
+    '<div class="metric-item"><div class="m-lbl">Total moves</div><div class="m-val">'+state.movesTotal+'</div></div>'+
+    '<div class="metric-item"><div class="m-lbl">Wrong placements</div><div class="m-val">'+state.wrongPlacementsTotal+'</div></div>'+
+    '<div class="metric-item"><div class="m-lbl">Hints used</div><div class="m-val">'+state.hintsUsedTotal+'/'+state.hintsBudgetTotal+'</div></div>'+
+    '<div class="metric-item"><div class="m-lbl">Avg accuracy</div><div class="m-val">'+avgAcc+'%</div></div>'+
+    '<div class="metric-item"><div class="m-lbl">Total time</div><div class="m-val">'+fmtTime(Date.now()-state.startTime)+'</div></div>'+
+    '<div class="metric-item"><div class="m-lbl">Domain</div><div class="m-val" style="font-size:13px;">'+state.domain+'</div></div>';
+
+  // Feedback text
+  const weakestDim = dims.map(d=>{
+    const rec = state.dna[d.key];
+    const pct = rec.total>0 ? (rec.correct/rec.total)*100 : 50;
+    return {label:d.label, pct:pct};
+  }).sort((a,b)=>a.pct-b.pct)[0];
+
+  let fbText = "You completed " + total + " challenges in " + state.domain + " at " + state.difficulty + " difficulty with an average accuracy of " + avgAcc + "%. ";
+  if(promptScore>=75){
+    fbText += "Your prompts consistently included the specific role, context, and constraints that separate a usable answer from a generic one. ";
+  } else {
+    fbText += "You're recognizing the right components, but placement and cleanup accuracy still cost you points on several rounds. ";
+  }
+  fbText += "Your strongest signal was picking up on structural formatting; your area to sharpen is " + (weakestDim ? weakestDim.label.toLowerCase() : "constraints") + " — the part of a prompt most people skip.";
+  document.getElementById("feedback-text").textContent = fbText;
+
+  document.getElementById("milestone-box").innerHTML =
+    '<b style="color:var(--amber);">Next milestone:</b> ' +
+    (promptScore>=90
+      ? "Try Advanced difficulty in a new domain to stress-test whether your instincts transfer beyond " + state.domain + "."
+      : promptScore>=60
+      ? "Replay this domain and aim for zero wrong placements — that alone should push you into the next rating band."
+      : "Replay at the same difficulty and focus only on the Constraints and Format blocks — they carry the most points per action.");
+
+  const lastSc = state.scenarios[state.scenarios.length-1];
+  document.getElementById("final-prompt-text").textContent = buildOptimizedPromptText(lastSc);
+}
+
+document.getElementById("replay-same-btn").addEventListener("click", function(){
+  startGame(state.domain, state.difficulty);
+});
+document.getElementById("replay-new-btn").addEventListener("click", function(){
+  document.getElementById("screen-report").classList.add("hide");
+  document.getElementById("screen-setup").classList.remove("hide");
+  renderSetup();
+});
+
+/* ======================================================================
+   INIT
+   ====================================================================== */
+renderSetup();
+
+})();
+</script>
+</body>
+</html>
