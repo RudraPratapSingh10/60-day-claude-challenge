@@ -1,0 +1,1777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personal AI Playbook — Testing, QA &amp; Code Review with Claude</title>
+<style>
+/* =========================================================
+   TOKENS
+   ========================================================= */
+:root{
+  --bg:#0B1420;
+  --bg-soft:#0E1826;
+  --surface:#121E2E;
+  --surface-2:#182740;
+  --surface-3:#1E3050;
+  --border:#24374F;
+  --border-soft:#1A2A3E;
+  --text:#E7EEF5;
+  --text-dim:#93A7BB;
+  --text-mute:#5E7690;
+  --teal:#2DD4BF;
+  --teal-dim:#1B9E8F;
+  --teal-bg:rgba(45,212,191,0.12);
+  --amber:#F5A623;
+  --amber-bg:rgba(245,166,35,0.12);
+  --violet:#8B7CF6;
+  --violet-bg:rgba(139,124,246,0.14);
+  --red:#F1667A;
+  --red-bg:rgba(241,102,122,0.12);
+  --radius-sm:6px;
+  --radius-md:10px;
+  --radius-lg:16px;
+  --shadow-1:0 1px 2px rgba(0,0,0,0.4);
+  --shadow-2:0 8px 24px rgba(0,0,0,0.45);
+  --shadow-3:0 20px 60px rgba(0,0,0,0.55);
+  --font-display: -apple-system, "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
+  --font-body: -apple-system, "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Consolas, monospace;
+  --nav-w: 232px;
+  --transition: 180ms cubic-bezier(.4,0,.2,1);
+}
+html.light{
+  --bg:#F3F5F8;
+  --bg-soft:#EAEEF3;
+  --surface:#FFFFFF;
+  --surface-2:#F5F7FA;
+  --surface-3:#EBEFF4;
+  --border:#DCE3EB;
+  --border-soft:#E7ECF1;
+  --text:#101A26;
+  --text-dim:#4B5D71;
+  --text-mute:#8496A8;
+  --teal-bg:rgba(20,166,148,0.10);
+  --teal:#118A7B;
+  --amber-bg:rgba(217,145,20,0.12);
+  --amber:#B9740F;
+  --violet-bg:rgba(124,105,235,0.12);
+  --violet:#6C5CE0;
+  --red-bg:rgba(213,60,80,0.10);
+  --red:#D53C50;
+  --shadow-1:0 1px 2px rgba(20,30,45,0.06);
+  --shadow-2:0 8px 24px rgba(20,30,45,0.10);
+  --shadow-3:0 20px 50px rgba(20,30,45,0.16);
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+::selection{ background:var(--teal); color:#04211D; }
+a{color:inherit;}
+button{font-family:inherit;}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px;}
+::-webkit-scrollbar-thumb:hover{background:var(--text-mute);}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+}
+
+/* =========================================================
+   LAYOUT
+   ========================================================= */
+.app{ display:flex; min-height:100vh; }
+
+.sidebar{
+  width:var(--nav-w);
+  flex-shrink:0;
+  background:var(--bg-soft);
+  border-right:1px solid var(--border-soft);
+  display:flex;
+  flex-direction:column;
+  position:sticky;
+  top:0;
+  height:100vh;
+  z-index:40;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:20px 18px 16px 18px;
+}
+.brand-mark{
+  width:30px;height:30px;border-radius:8px;
+  background:linear-gradient(135deg,var(--teal),var(--violet));
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+  box-shadow:0 0 0 1px rgba(255,255,255,0.08) inset;
+}
+.brand-mark svg{width:16px;height:16px;}
+.brand-text{ line-height:1.15; }
+.brand-text strong{ display:block; font-family:var(--font-display); font-size:14.5px; font-weight:700; letter-spacing:-0.01em; }
+.brand-text span{ display:block; font-size:10.5px; color:var(--text-mute); letter-spacing:0.04em; text-transform:uppercase; margin-top:2px;}
+
+.nav{ padding:6px 12px; display:flex; flex-direction:column; gap:2px; flex:1; overflow-y:auto;}
+.nav-label{ font-size:10.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-mute); padding:14px 10px 6px; font-weight:600;}
+.nav-item{
+  display:flex; align-items:center; gap:10px;
+  padding:9px 10px; border-radius:var(--radius-sm);
+  color:var(--text-dim); font-size:13.5px; font-weight:500;
+  cursor:pointer; border:1px solid transparent; text-align:left; background:none; width:100%;
+  transition:background var(--transition), color var(--transition);
+}
+.nav-item svg{ width:16px;height:16px; flex-shrink:0; opacity:0.85;}
+.nav-item:hover{ background:var(--surface-2); color:var(--text); }
+.nav-item.active{ background:var(--teal-bg); color:var(--teal); }
+.nav-item.active svg{ opacity:1; }
+.nav-count{ margin-left:auto; font-size:10.5px; color:var(--text-mute); background:var(--surface-2); padding:1px 6px; border-radius:20px; }
+.nav-item.active .nav-count{ color:var(--teal); background:rgba(45,212,191,0.16); }
+
+.sidebar-foot{ padding:12px; border-top:1px solid var(--border-soft); display:flex; flex-direction:column; gap:6px;}
+.foot-row{ display:flex; gap:6px; }
+.icon-btn{
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  background:var(--surface-2); border:1px solid var(--border-soft); color:var(--text-dim);
+  border-radius:var(--radius-sm); padding:8px; cursor:pointer; font-size:12px; flex:1;
+  transition:all var(--transition);
+}
+.icon-btn:hover{ background:var(--surface-3); color:var(--text); }
+.icon-btn svg{width:14px;height:14px;}
+
+.main{ flex:1; min-width:0; display:flex; flex-direction:column; }
+.topbar{
+  position:sticky; top:0; z-index:30;
+  display:flex; align-items:center; gap:12px;
+  padding:14px 28px; background:rgba(11,20,32,0.82); backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border-soft);
+}
+html.light .topbar{ background:rgba(243,245,248,0.85); }
+.menu-toggle{ display:none; }
+.topbar h1{ font-family:var(--font-display); font-size:16.5px; font-weight:700; letter-spacing:-0.01em; margin:0; }
+.topbar-sub{ font-size:12px; color:var(--text-mute); margin-top:1px; }
+.topbar-spacer{ flex:1; }
+.search-wrap{ position:relative; width:260px; }
+.search-wrap input{
+  width:100%; background:var(--surface); border:1px solid var(--border); color:var(--text);
+  border-radius:var(--radius-sm); padding:8px 10px 8px 32px; font-size:13px; outline:none;
+  transition:border-color var(--transition);
+}
+.search-wrap input:focus{ border-color:var(--teal); }
+.search-wrap svg{ position:absolute; left:10px; top:50%; transform:translateY(-50%); width:14px; height:14px; color:var(--text-mute); }
+.kbd{ font-family:var(--font-mono); font-size:10px; border:1px solid var(--border); border-radius:4px; padding:1px 5px; color:var(--text-mute); position:absolute; right:8px; top:50%; transform:translateY(-50%); }
+
+.content{ padding:24px 28px 64px; max-width:1180px; width:100%; margin:0 auto; }
+
+/* =========================================================
+   EXPLAINER BANNER
+   ========================================================= */
+.explainer{
+  background:linear-gradient(135deg, var(--surface-2), var(--surface));
+  border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:20px 22px; margin-bottom:22px; position:relative;
+  display:flex; gap:16px; align-items:flex-start;
+}
+.explainer-icon{
+  width:34px;height:34px;border-radius:9px;background:var(--teal-bg);color:var(--teal);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.explainer-icon svg{width:18px;height:18px;}
+.explainer h3{ margin:0 0 4px; font-family:var(--font-display); font-size:15px; }
+.explainer p{ margin:0; font-size:13.3px; color:var(--text-dim); line-height:1.55; max-width:760px;}
+.explainer ul{ margin:8px 0 0; padding-left:18px; font-size:13px; color:var(--text-dim); line-height:1.7;}
+.explainer ul b{ color:var(--text); font-weight:600; }
+.explainer-close{
+  position:absolute; top:14px; right:14px; background:none; border:none; color:var(--text-mute);
+  cursor:pointer; width:26px;height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center;
+}
+.explainer-close:hover{ background:var(--surface-3); color:var(--text); }
+
+/* =========================================================
+   BUTTONS / FORM ELEMENTS
+   ========================================================= */
+.btn{
+  display:inline-flex; align-items:center; gap:6px; justify-content:center;
+  padding:9px 14px; border-radius:var(--radius-sm); font-size:13px; font-weight:600;
+  cursor:pointer; border:1px solid transparent; transition:all var(--transition); white-space:nowrap;
+}
+.btn svg{ width:14px; height:14px; }
+.btn-primary{ background:var(--teal); color:#04211D; }
+.btn-primary:hover{ background:#3EE4CE; transform:translateY(-1px); }
+.btn-ghost{ background:var(--surface-2); color:var(--text); border-color:var(--border); }
+.btn-ghost:hover{ background:var(--surface-3); }
+.btn-outline{ background:transparent; color:var(--text-dim); border-color:var(--border); }
+.btn-outline:hover{ color:var(--text); border-color:var(--text-mute); }
+.btn-danger{ background:var(--red-bg); color:var(--red); }
+.btn-danger:hover{ background:rgba(241,102,122,0.22); }
+.btn-sm{ padding:6px 10px; font-size:12px; }
+.btn:disabled{ opacity:0.45; cursor:not-allowed; transform:none !important; }
+
+.field{ margin-bottom:14px; }
+.field label{ display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; color:var(--text); margin-bottom:5px; }
+.field .hint{ font-size:11.8px; color:var(--text-mute); font-weight:400; margin-bottom:6px; line-height:1.5; }
+select, input[type=text], input[type=number], textarea{
+  width:100%; background:var(--surface); border:1px solid var(--border); color:var(--text);
+  border-radius:var(--radius-sm); padding:9px 10px; font-size:13px; font-family:var(--font-body); outline:none;
+  transition:border-color var(--transition);
+}
+textarea{ font-family:var(--font-mono); font-size:12.5px; line-height:1.6; resize:vertical; min-height:80px;}
+select:focus, input:focus, textarea:focus{ border-color:var(--teal); }
+.chip-row{ display:flex; flex-wrap:wrap; gap:6px; }
+.chip{
+  padding:6px 10px; border-radius:20px; border:1px solid var(--border); background:var(--surface);
+  font-size:12px; color:var(--text-dim); cursor:pointer; user-select:none; transition:all var(--transition);
+}
+.chip.selected{ background:var(--teal-bg); border-color:var(--teal-dim); color:var(--teal); font-weight:600; }
+.chip:hover{ border-color:var(--text-mute); }
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+.section-head{ margin-bottom:16px; }
+.section-head h2{ font-family:var(--font-display); font-size:20px; margin:0 0 3px; letter-spacing:-0.01em; }
+.section-head p{ margin:0; font-size:13px; color:var(--text-mute); }
+
+.stat-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:26px; }
+.stat-card{ background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius-md); padding:16px; }
+.stat-card .num{ font-family:var(--font-display); font-size:26px; font-weight:700; letter-spacing:-0.02em; }
+.stat-card .lbl{ font-size:12px; color:var(--text-mute); margin-top:2px; }
+
+.cat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:28px;}
+.cat-card{
+  background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius-lg);
+  padding:20px; cursor:pointer; transition:all var(--transition); position:relative; overflow:hidden;
+}
+.cat-card:hover{ border-color:var(--teal-dim); transform:translateY(-2px); box-shadow:var(--shadow-2); }
+.cat-card .tag{ display:inline-flex; align-items:center; gap:6px; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--teal); font-weight:700; margin-bottom:10px;}
+.cat-card h3{ margin:0 0 6px; font-family:var(--font-display); font-size:17px; }
+.cat-card p{ margin:0 0 14px; font-size:12.8px; color:var(--text-dim); line-height:1.55; }
+.cat-card .cnt{ font-size:12px; color:var(--text-mute); }
+.cat-card.review .tag{ color:var(--violet); }
+
+.quick-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.quick-card{
+  background:var(--surface-2); border:1px dashed var(--border); border-radius:var(--radius-lg);
+  padding:18px; display:flex; align-items:center; gap:14px; cursor:pointer; transition:all var(--transition);
+}
+.quick-card:hover{ border-color:var(--teal-dim); background:var(--surface-3); }
+.quick-icon{ width:38px;height:38px;border-radius:10px; display:flex;align-items:center;justify-content:center; flex-shrink:0;}
+.quick-icon.pb{ background:var(--teal-bg); color:var(--teal);}
+.quick-icon.lb{ background:var(--violet-bg); color:var(--violet);}
+.quick-card h4{ margin:0 0 2px; font-size:14px; }
+.quick-card p{ margin:0; font-size:12px; color:var(--text-mute); }
+
+/* =========================================================
+   WORKFLOW LIBRARY
+   ========================================================= */
+.toolbar{ display:flex; align-items:center; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
+.tabs{ display:flex; gap:4px; background:var(--surface-2); border:1px solid var(--border-soft); border-radius:var(--radius-sm); padding:3px; }
+.tab{ padding:7px 13px; border-radius:6px; font-size:12.5px; font-weight:600; color:var(--text-mute); cursor:pointer; border:none; background:none; }
+.tab.active{ background:var(--surface); color:var(--text); box-shadow:var(--shadow-1); }
+.fav-toggle{ display:flex; align-items:center; gap:6px; padding:8px 12px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface); color:var(--text-dim); font-size:12.5px; cursor:pointer;}
+.fav-toggle.on{ color:var(--amber); border-color:var(--amber); background:var(--amber-bg);}
+.fav-toggle svg{width:14px;height:14px;}
+
+.wf-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+.wf-card{
+  background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius-md);
+  padding:16px; cursor:pointer; transition:all var(--transition); display:flex; flex-direction:column; gap:10px;
+}
+.wf-card:hover{ border-color:var(--teal-dim); box-shadow:var(--shadow-2); transform:translateY(-1px); }
+.wf-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px;}
+.wf-title{ font-size:14.5px; font-weight:700; letter-spacing:-0.005em; }
+.wf-desc{ font-size:12.5px; color:var(--text-dim); line-height:1.5; }
+.wf-tags{ display:flex; gap:6px; flex-wrap:wrap; }
+.wf-tag{ font-size:10.5px; padding:3px 7px; border-radius:5px; background:var(--surface-2); color:var(--text-mute); border:1px solid var(--border-soft);}
+.wf-foot{ display:flex; align-items:center; justify-content:space-between; margin-top:auto; padding-top:8px; border-top:1px solid var(--border-soft); }
+.wf-badge{ font-size:10.5px; color:var(--teal); display:flex; align-items:center; gap:4px; font-weight:600;}
+.wf-badge.custom{ color:var(--violet); }
+.star-btn{ background:none; border:none; cursor:pointer; color:var(--text-mute); padding:2px; display:flex;}
+.star-btn.on{ color:var(--amber); }
+.star-btn svg{ width:16px;height:16px; }
+.empty-state{ text-align:center; padding:60px 20px; color:var(--text-mute); }
+.empty-state svg{ width:34px;height:34px; margin-bottom:10px; opacity:0.6;}
+.empty-state h4{ color:var(--text); font-size:14.5px; margin:0 0 5px;}
+.empty-state p{ font-size:12.8px; max-width:340px; margin:0 auto; line-height:1.5;}
+
+/* =========================================================
+   MODAL / DETAIL PANEL
+   ========================================================= */
+.overlay{ position:fixed; inset:0; background:rgba(3,7,13,0.6); backdrop-filter:blur(2px); z-index:100; display:flex; justify-content:flex-end; opacity:0; pointer-events:none; transition:opacity var(--transition); }
+.overlay.show{ opacity:1; pointer-events:auto; }
+.panel{
+  width:min(620px,100%); height:100%; background:var(--bg-soft); border-left:1px solid var(--border);
+  overflow-y:auto; transform:translateX(24px); transition:transform var(--transition); box-shadow:var(--shadow-3);
+}
+.overlay.show .panel{ transform:translateX(0); }
+.panel-head{ position:sticky; top:0; background:var(--bg-soft); border-bottom:1px solid var(--border-soft); padding:18px 22px; display:flex; align-items:flex-start; gap:12px; z-index:5;}
+.panel-head .htxt{ flex:1; }
+.panel-head h2{ margin:0 0 4px; font-family:var(--font-display); font-size:18px; }
+.panel-head p{ margin:0; font-size:12.5px; color:var(--text-mute); line-height:1.5;}
+.panel-close{ background:var(--surface-2); border:1px solid var(--border-soft); color:var(--text-dim); width:28px; height:28px; border-radius:7px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.panel-body{ padding:20px 22px 60px; }
+.panel-actions{ display:flex; gap:8px; padding:14px 22px; border-top:1px solid var(--border-soft); position:sticky; bottom:0; background:var(--bg-soft); flex-wrap:wrap;}
+
+.subhead{ font-size:11px; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-mute); font-weight:700; margin:20px 0 10px; display:flex; align-items:center; gap:6px;}
+.subhead:first-child{ margin-top:0; }
+
+.term-box{
+  background:#080F18; border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden;
+}
+html.light .term-box{ background:#0E1826; }
+.term-bar{ display:flex; align-items:center; gap:6px; padding:9px 12px; background:rgba(255,255,255,0.03); border-bottom:1px solid var(--border);}
+.term-dot{ width:9px;height:9px;border-radius:50%; }
+.term-title{ margin-left:6px; font-size:11px; color:var(--text-mute); font-family:var(--font-mono);}
+.term-body{ padding:14px 16px; font-family:var(--font-mono); font-size:12.3px; line-height:1.7; color:#D6E4F0; white-space:pre-wrap; word-break:break-word; max-height:360px; overflow-y:auto;}
+.term-body b{ color:var(--teal); font-weight:600;}
+.copy-fab{ display:flex; align-items:center; gap:6px; padding:6px 11px; font-size:11.5px; background:var(--surface-2); border:1px solid var(--border-soft); color:var(--text-dim); border-radius:6px; cursor:pointer;}
+.copy-fab:hover{ color:var(--text); background:var(--surface-3);}
+.copy-fab svg{ width:12px;height:12px;}
+
+.bp-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px;}
+.bp-list li{ display:flex; gap:8px; font-size:12.8px; color:var(--text-dim); line-height:1.55;}
+.bp-list li svg{ width:14px;height:14px; color:var(--teal); flex-shrink:0; margin-top:2px;}
+
+/* =========================================================
+   BUILDERS (Prompt Builder / Loop Builder)
+   ========================================================= */
+.builder-layout{ display:grid; grid-template-columns:300px 1fr; gap:18px; align-items:start; }
+.block-picker{ background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius-lg); padding:14px; position:sticky; top:84px; }
+.block-picker h4{ margin:0 0 3px; font-size:13px; }
+.block-picker .sub{ font-size:11.5px; color:var(--text-mute); margin-bottom:12px; line-height:1.5;}
+.pick-item{
+  display:flex; gap:10px; padding:10px; border-radius:var(--radius-sm); border:1px solid var(--border-soft);
+  margin-bottom:8px; cursor:pointer; transition:all var(--transition); background:var(--surface-2);
+}
+.pick-item:hover{ border-color:var(--teal-dim); }
+.pick-item.added{ opacity:0.45; cursor:default; }
+.pick-icon{ width:26px;height:26px;border-radius:7px; background:var(--surface-3); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--teal);}
+.pick-icon svg{ width:14px;height:14px;}
+.pick-txt strong{ display:block; font-size:12.5px; margin-bottom:2px;}
+.pick-txt span{ display:block; font-size:11px; color:var(--text-mute); line-height:1.45;}
+
+.assembled{ display:flex; flex-direction:column; gap:12px; margin-bottom:18px;}
+.blk-card{ background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius-md); padding:14px 16px; }
+.blk-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:4px;}
+.blk-head .lft{ display:flex; align-items:center; gap:8px;}
+.blk-num{ width:20px;height:20px;border-radius:5px; background:var(--teal-bg); color:var(--teal); font-size:10.5px; font-weight:700; display:flex; align-items:center; justify-content:center;}
+.blk-head strong{ font-size:13.5px; }
+.blk-remove{ background:none; border:none; color:var(--text-mute); cursor:pointer; padding:3px;}
+.blk-remove:hover{ color:var(--red); }
+.blk-help{ font-size:11.8px; color:var(--text-mute); line-height:1.5; margin:0 0 10px; }
+
+.builder-empty{ padding:40px 20px; text-align:center; border:1px dashed var(--border); border-radius:var(--radius-lg); color:var(--text-mute); font-size:13px;}
+
+.preview-wrap{ position:sticky; bottom:0; }
+
+/* =========================================================
+   MISC
+   ========================================================= */
+.badge-dot{ width:7px;height:7px;border-radius:50%; display:inline-block; }
+.toast{
+  position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px); z-index:300;
+  background:var(--surface-3); border:1px solid var(--border); color:var(--text); padding:11px 18px;
+  border-radius:30px; font-size:13px; display:flex; align-items:center; gap:8px; box-shadow:var(--shadow-3);
+  opacity:0; pointer-events:none; transition:all 220ms ease;
+}
+.toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+.toast svg{ width:14px;height:14px; color:var(--teal);}
+
+.modal-bg{ position:fixed; inset:0; background:rgba(3,7,13,0.65); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px; opacity:0; pointer-events:none; transition:opacity var(--transition);}
+.modal-bg.show{ opacity:1; pointer-events:auto;}
+.modal{ background:var(--bg-soft); border:1px solid var(--border); border-radius:var(--radius-lg); width:min(560px,100%); max-height:86vh; overflow-y:auto; box-shadow:var(--shadow-3); transform:scale(0.97); transition:transform var(--transition);}
+.modal-bg.show .modal{ transform:scale(1);}
+.modal-head{ padding:20px 22px 14px; border-bottom:1px solid var(--border-soft); display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+.modal-head h3{ margin:0 0 4px; font-family:var(--font-display); font-size:17px;}
+.modal-head p{ margin:0; font-size:12.5px; color:var(--text-mute);}
+.modal-body{ padding:18px 22px;}
+.modal-foot{ padding:14px 22px; border-top:1px solid var(--border-soft); display:flex; justify-content:flex-end; gap:8px;}
+
+.onb-steps{ display:flex; flex-direction:column; gap:14px; margin:14px 0 4px;}
+.onb-step{ display:flex; gap:12px;}
+.onb-num{ width:26px;height:26px;border-radius:50%; background:var(--teal-bg); color:var(--teal); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;}
+.onb-step h5{ margin:0 0 2px; font-size:13.5px;}
+.onb-step p{ margin:0; font-size:12.5px; color:var(--text-dim); line-height:1.5;}
+
+.shortcut-grid{ display:flex; flex-direction:column; gap:8px; }
+.shortcut-row{ display:flex; align-items:center; justify-content:space-between; font-size:12.8px; color:var(--text-dim); padding:6px 0; border-bottom:1px solid var(--border-soft);}
+.shortcut-row kbd{ font-family:var(--font-mono); background:var(--surface-2); border:1px solid var(--border); padding:2px 7px; border-radius:5px; font-size:11.5px; color:var(--text);}
+
+.term-cursor{ display:inline-block; width:7px; height:14px; background:var(--teal); vertical-align:middle; margin-left:2px; animation:blink 1.1s steps(1) infinite;}
+@keyframes blink{ 50%{opacity:0;} }
+
+.hp-btn{ display:flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:8px; background:var(--surface-2); border:1px solid var(--border-soft); color:var(--text-dim); cursor:pointer;}
+.hp-btn:hover{ color:var(--text); background:var(--surface-3);}
+.hp-btn svg{ width:15px;height:15px;}
+
+/* Diff/change highlight for filled template */
+.var-fill{ color:var(--amber); font-weight:600; }
+
+.filter-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+@media (max-width: 980px){
+  .stat-grid{ grid-template-columns:repeat(2,1fr); }
+  .cat-grid{ grid-template-columns:1fr; }
+  .quick-row{ grid-template-columns:1fr; }
+  .wf-grid{ grid-template-columns:1fr; }
+  .builder-layout{ grid-template-columns:1fr; }
+  .block-picker{ position:static; }
+}
+@media (max-width: 760px){
+  .sidebar{ position:fixed; left:0; top:0; z-index:200; transform:translateX(-100%); transition:transform var(--transition); box-shadow:var(--shadow-3);}
+  .sidebar.open{ transform:translateX(0); }
+  .menu-toggle{ display:flex; }
+  .search-wrap{ width:150px; }
+  .content{ padding:18px 14px 60px; }
+  .panel{ width:100%; }
+  .topbar{ padding:12px 14px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4M12 3l8 4v5c0 5-3.4 8.4-8 9-4.6-.6-8-4-8-9V7l8-4z" stroke="#04211D" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>
+      </div>
+      <div class="brand-text"><strong>AI Playbook</strong><span>Personal Edition</span></div>
+    </div>
+    <nav class="nav" id="navList"></nav>
+    <div class="sidebar-foot">
+      <div class="foot-row">
+        <button class="icon-btn" id="themeToggle" title="Toggle dark / light mode">
+          <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+          <span id="themeLabel">Dark</span>
+        </button>
+        <button class="icon-btn" id="helpBtn" title="What is this? (Shift+/)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12" y2="17.01"/></svg>
+          Help
+        </button>
+      </div>
+      <div class="foot-row">
+        <button class="icon-btn" id="exportBtn" title="Export your workflow library as a backup file">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export
+        </button>
+        <button class="icon-btn" id="importBtn" title="Import a previously exported backup file">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Import
+        </button>
+        <input type="file" id="importFile" accept=".json" style="display:none">
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <button class="icon-btn menu-toggle" id="menuToggle" style="flex:0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <div>
+        <h1 id="pageTitle">Dashboard</h1>
+        <div class="topbar-sub" id="pageSub">Your saved AI prompt workflows, at a glance</div>
+      </div>
+      <div class="topbar-spacer"></div>
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="globalSearch" type="text" placeholder="Search workflows...">
+      </div>
+    </div>
+
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="overlay" id="detailOverlay"><div class="panel" id="detailPanel"></div></div>
+
+<!-- GENERIC MODAL (onboarding / help / new workflow / shortcuts) -->
+<div class="modal-bg" id="modalBg"><div class="modal" id="modalBox"></div></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span id="toastMsg">Copied</span></div>
+
+<script>
+(function(){
+"use strict";
+
+/* =========================================================
+   ICONS (inline SVG strings, reused across UI)
+   ========================================================= */
+const ICONS = {
+  dashboard:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>',
+  testing:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6M10 3v5.5L5 18a2 2 0 001.8 3h10.4a2 2 0 001.8-3l-5-9.5V3"/></svg>',
+  review:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
+  builder:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
+  loop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>',
+  mine:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>',
+  star:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+  starOutline:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+  copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>',
+  dup:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>',
+  help:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12" y2="17.01"/></svg>',
+  bulb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7c.6.5 1 1.3 1 2.1v.2h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0012 2z"/></svg>',
+  edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'
+};
+
+/* =========================================================
+   BLOCK / VARIABLE FIELD OPTIONS shared across templates
+   ========================================================= */
+const LANGS = ["JavaScript","TypeScript","Python","Java","Go","C#","Ruby","PHP","Other / not listed"];
+const TEST_FW = ["Jest","Vitest","Mocha/Chai","PyTest","JUnit 5","xUnit / NUnit","RSpec","Other / not listed"];
+
+/* =========================================================
+   BUILT-IN WORKFLOW TEMPLATES
+   ========================================================= */
+const CATEGORIES = [
+  {id:"testing", label:"Testing & QA", short:"Testing", icon:ICONS.testing, color:"var(--teal)",
+   desc:"Turn a piece of code, a feature, or a bug into solid test coverage — unit tests, edge cases, gap analysis, and full test plans."},
+  {id:"review", label:"Code Review & Refactoring", short:"Code Review", icon:ICONS.review, color:"var(--violet)",
+   desc:"Get a second pair of eyes on your code — structured reviews, refactor suggestions, readability checks, and performance passes."}
+];
+
+function tpl(strings, ...vals){ return strings.reduce((a,s,i)=>a+s+(vals[i]!==undefined?vals[i]:''),''); }
+
+const TEMPLATES = [
+{
+  id:"t-unit-gen", category:"testing", title:"Unit Test Generator",
+  purpose:"Generates a ready-to-run set of unit tests for a function, class, or module you paste in — matched to your language and test framework.",
+  tags:["unit tests","generation"],
+  variables:[
+    {key:"language", label:"Language", type:"select", options:LANGS, default:"JavaScript", help:"The programming language of the code being tested."},
+    {key:"framework", label:"Test framework", type:"select", options:TEST_FW, default:"Jest", help:"The testing library Claude should write tests for."},
+    {key:"code", label:"Code to test", type:"textarea", default:"function calculateDiscount(price, percent) {\n  if (percent < 0 || percent > 100) throw new Error('Invalid percent');\n  return price - (price * percent / 100);\n}", help:"Paste the function, class, or module you want tests for."},
+    {key:"focus", label:"What matters most here", type:"select", options:["Correctness for typical inputs","Edge cases and invalid inputs","Both equally"], default:"Both equally", help:"Tells Claude where to put its emphasis."}
+  ],
+  template: tpl`<role>You are a senior software engineer who specializes in writing precise, maintainable automated tests.</role>
+
+<objective>Write a complete set of unit tests for the code below, using {{framework}} for {{language}}.</objective>
+
+<context>
+{{code}}
+</context>
+
+<constraints>
+- Cover typical ("happy path") cases first, then edge cases and invalid input.
+- Priority: {{focus}}.
+- Each test should assert one behavior and have a descriptive name explaining what it verifies.
+- Do not modify the function under test — only write tests around it.
+- Use idiomatic {{framework}} syntax and conventions.
+</constraints>
+
+<reasoning_strategy>Before writing code, briefly list the distinct behaviors and edge cases you plan to cover, then generate the tests.</reasoning_strategy>
+
+<output_format>A single runnable {{framework}} test file, followed by a short bullet list explaining what each test group covers.</output_format>`,
+  bestPractices:[
+    "Always paste the real function signature, not a paraphrase — Claude tests what's actually there.",
+    "State any business rules that aren't obvious from the code (e.g. \"percent is always 0-100\").",
+    "Ask for edge cases explicitly if you want them prioritized over happy-path coverage.",
+    "Review generated tests before committing — treat them as a strong first draft, not final QA sign-off."
+  ]
+},
+{
+  id:"t-review-gaps", category:"testing", title:"Test Case Review & Gap Analysis",
+  purpose:"Reviews an existing test suite (or list of test cases) and tells you what's missing — before a bug finds it for you.",
+  tags:["review","coverage"],
+  variables:[
+    {key:"language", label:"Language", type:"select", options:LANGS, default:"Python", help:"Language the tests and code are written in."},
+    {key:"feature", label:"Feature or component being tested", type:"text", default:"User checkout flow", help:"One line describing what the tests are meant to cover."},
+    {key:"existing", label:"Existing test cases / test file", type:"textarea", default:"1. test_valid_checkout_success\n2. test_checkout_with_empty_cart\n3. test_checkout_with_expired_card", help:"Paste your current test list or test file."},
+    {key:"riskLevel", label:"How critical is this feature?", type:"select", options:["Low - internal tool","Medium - standard user-facing feature","High - payments, auth, or data integrity"], default:"Medium - standard user-facing feature", help:"Higher risk means Claude should push harder on edge cases."}
+  ],
+  template: tpl`<role>You are a QA architect who specializes in finding coverage gaps before they become production incidents.</role>
+
+<objective>Review the existing test cases for "{{feature}}" and identify what's missing.</objective>
+
+<context>
+Language: {{language}}
+Criticality: {{riskLevel}}
+
+Existing test cases:
+{{existing}}
+</context>
+
+<constraints>
+- Do not simply restate the existing tests — focus on what is NOT covered.
+- Consider: boundary values, invalid/malformed input, concurrency or race conditions, permission/auth edge cases, and failure/rollback paths.
+- Flag anything that looks like a false sense of security (a test that looks thorough but isn't).
+</constraints>
+
+<reasoning_strategy>Think step-by-step: first map out the full behavior space of this feature, then compare it against the existing tests to find the delta.</reasoning_strategy>
+
+<output_format>
+1. Coverage summary (1-2 sentences)
+2. Table: Gap | Why it matters | Suggested test name
+3. Top 3 gaps to fix first, given the criticality level
+</output_format>`,
+  bestPractices:[
+    "List your ACTUAL existing tests, not a summary — Claude can only find gaps against what you show it.",
+    "Set criticality honestly. High-risk features deserve a harder pass on edge cases.",
+    "Use this before a release, not just after a bug — it's cheaper as prevention.",
+    "Pair with the Unit Test Generator: run this first, then generate tests for the gaps it finds."
+  ]
+},
+{
+  id:"t-edge-case", category:"testing", title:"Edge Case / Negative Scenario Generator",
+  purpose:"Brainstorms the unusual, invalid, and adversarial inputs most people forget to test for.",
+  tags:["edge cases","negative testing"],
+  variables:[
+    {key:"target", label:"What are you testing?", type:"text", default:"A signup form: email, password, referral code", help:"Describe the function, form, or API endpoint."},
+    {key:"inputType", label:"Primary input type", type:"select", options:["Form / user input","API request payload","File upload","Numeric / financial calculation","Date or time value","Other"], default:"Form / user input", help:"Different input types have different classic edge cases."},
+    {key:"count", label:"How many scenarios?", type:"select", options:["5","10","15","20"], default:"10", help:"Controls the length of the list."}
+  ],
+  template: tpl`<role>You are a QA engineer known for breaking things nobody else thought to try.</role>
+
+<objective>Generate {{count}} edge cases and negative test scenarios for: {{target}}.</objective>
+
+<context>Input type: {{inputType}}</context>
+
+<constraints>
+- Include boundary values (empty, zero, max length/size, min/max numeric limits).
+- Include malformed/invalid input (wrong type, wrong format, injected characters).
+- Include real-world "weird but valid" cases (unicode, whitespace-only, extremely long strings).
+- Include at least one concurrency/timing scenario if relevant.
+- Skip generic advice — every item must be a concrete, testable scenario.
+</constraints>
+
+<reasoning_strategy>Consider multiple categories of failure (input validation, boundary conditions, state/timing, security) before listing scenarios, so the list isn't skewed toward one category.</reasoning_strategy>
+
+<output_format>Numbered list. Each item: scenario, then expected behavior in one clause.</output_format>`,
+  bestPractices:[
+    "Be specific about the target — \"a form\" is vague, \"signup form with email + password\" gets better results.",
+    "Ask for more scenarios than you need, then pick the ones relevant to your risk profile.",
+    "Feed the output straight into the Unit Test Generator to turn scenarios into runnable tests.",
+    "Revisit this after a production bug — add the real-world case you missed to your prompt's context next time."
+  ]
+},
+{
+  id:"t-test-plan", category:"testing", title:"Test Plan Builder",
+  purpose:"Produces a structured, feature-level test plan you can hand to a team or use to organize your own QA pass.",
+  tags:["planning","documentation"],
+  variables:[
+    {key:"feature", label:"Feature name", type:"text", default:"In-app notifications", help:"The feature or release you're planning tests for."},
+    {key:"scope", label:"Scope", type:"textarea", default:"Users can receive, read, and dismiss in-app notifications. Includes push delivery and badge counts.", help:"A short description of what the feature does."},
+    {key:"testTypes", label:"Test types to include", type:"select", options:["Functional only","Functional + Regression","Functional + Regression + Performance","Full (Functional, Regression, Performance, Security)"], default:"Functional + Regression", help:"Controls how broad the plan is."}
+  ],
+  template: tpl`<role>You are a QA lead responsible for planning test coverage before a release.</role>
+
+<objective>Create a test plan for the feature "{{feature}}".</objective>
+
+<context>
+Scope: {{scope}}
+Required test types: {{testTypes}}
+</context>
+
+<constraints>
+- Organize by test type, not as one flat list.
+- Each section should list concrete test cases, not vague goals.
+- Call out any dependencies or environments needed (e.g. staging data, feature flags).
+- Note anything explicitly out of scope, so reviewers know it was a deliberate choice.
+</constraints>
+
+<output_format>
+## Test Plan: {{feature}}
+### Scope & Assumptions
+### [Test type] section(s) with numbered test cases
+### Out of Scope
+### Sign-off Checklist
+</output_format>
+
+<quality_checks>Before finalizing, check: does every stated scope item map to at least one test case?</quality_checks>`,
+  bestPractices:[
+    "Write scope in plain language — Claude turns it into structured coverage, you don't have to.",
+    "Use this at the start of a feature, not the end, so gaps surface while there's time to fix them.",
+    "Export the result into your team's doc tool as a starting draft, not a final artifact.",
+    "Re-run with 'Full' test types before high-risk releases."
+  ]
+},
+{
+  id:"r-code-review", category:"review", title:"Code Review Assistant",
+  purpose:"Gives you a structured, prioritized code review — the kind a thoughtful senior teammate would leave, minus the wait.",
+  tags:["review","quality"],
+  variables:[
+    {key:"language", label:"Language", type:"select", options:LANGS, default:"TypeScript", help:"Language of the code under review."},
+    {key:"code", label:"Code to review", type:"textarea", default:"function getUser(id) {\n  const user = db.query('SELECT * FROM users WHERE id = ' + id);\n  return user;\n}", help:"Paste the diff, function, or file you want reviewed."},
+    {key:"reviewFocus", label:"Review focus", type:"select", options:["General quality pass","Security-focused","Correctness / bug-hunting","Style & consistency"], default:"General quality pass", help:"Sets what the review should prioritize."},
+    {key:"severity", label:"Minimum severity to report", type:"select", options:["Everything, including nitpicks","Only meaningful issues","Only blocking issues"], default:"Only meaningful issues", help:"Controls how noisy the review is."}
+  ],
+  template: tpl`<role>You are a senior {{language}} engineer performing a thorough, constructive code review.</role>
+
+<objective>Review the code below with a focus on: {{reviewFocus}}.</objective>
+
+<context>
+{{code}}
+</context>
+
+<constraints>
+- Report only issues at or above this severity: {{severity}}.
+- For every issue: explain WHY it matters, not just what's wrong.
+- Distinguish "must fix" from "worth considering."
+- Do not rewrite the whole file — suggest targeted diffs or snippets.
+- Acknowledge what's already done well, briefly.
+</constraints>
+
+<reasoning_strategy>Read the code fully before commenting. Think about correctness, security, and maintainability as separate passes, then merge findings by severity.</reasoning_strategy>
+
+<output_format>
+### What's working
+### Must fix (with line references and suggested fix)
+### Worth considering
+### Overall verdict (approve / approve with changes / needs work)
+</output_format>`,
+  bestPractices:[
+    "Paste the real diff or file, including surrounding context if the issue depends on it.",
+    "Set severity to \"Only blocking issues\" for a fast pre-merge sanity check; use \"Everything\" for a deep audit.",
+    "Ask for a security-focused pass specifically before touching auth, payments, or user data.",
+    "Treat the verdict as a second opinion, not a replacement for human sign-off on critical code."
+  ]
+},
+{
+  id:"r-refactor", category:"review", title:"Refactoring Suggestions",
+  purpose:"Suggests concrete ways to simplify, restructure, or modernize code without changing its behavior.",
+  tags:["refactor","cleanup"],
+  variables:[
+    {key:"language", label:"Language", type:"select", options:LANGS, default:"JavaScript", help:"Language of the code being refactored."},
+    {key:"code", label:"Code to refactor", type:"textarea", default:"function process(data) {\n  var result = [];\n  for (var i = 0; i < data.length; i++) {\n    if (data[i].active == true) {\n      result.push(data[i]);\n    }\n  }\n  return result;\n}", help:"Paste the code you'd like simplified or modernized."},
+    {key:"goal", label:"Primary refactor goal", type:"select", options:["Readability","Reduce duplication","Modernize syntax/patterns","Simplify control flow","Prepare for testing (extract pure functions)"], default:"Readability", help:"What the refactor should optimize for."},
+    {key:"constraint", label:"Hard constraint", type:"select", options:["Must not change public API/signature","No new dependencies","Must stay backward-compatible","No constraint"], default:"Must not change public API/signature", help:"A boundary the refactor must respect."}
+  ],
+  template: tpl`<role>You are a senior {{language}} engineer who refactors code for clarity without changing behavior.</role>
+
+<objective>Refactor the code below, optimizing for: {{goal}}.</objective>
+
+<context>
+{{code}}
+</context>
+
+<constraints>
+- Hard constraint: {{constraint}}.
+- Behavior must remain identical — this is a refactor, not a feature change.
+- Prefer small, explainable steps over one large rewrite.
+- Flag anything you're unsure preserves behavior exactly.
+</constraints>
+
+<reasoning_strategy>Identify the specific smells (duplication, deep nesting, unclear naming, mutable state, etc.) before writing the refactored version, so each change has a clear justification.</reasoning_strategy>
+
+<output_format>
+1. Refactored code
+2. Change log: what changed and why (bullet list)
+3. Anything you'd want a human to double-check
+</output_format>`,
+  bestPractices:[
+    "State the hard constraint clearly — \"don't change the API\" changes what Claude is willing to touch.",
+    "Refactor in small chunks (one function/module at a time) rather than a whole file at once.",
+    "Run your existing tests after applying suggestions to confirm behavior really didn't change.",
+    "Use \"Prepare for testing\" as the goal when a function is hard to unit test as-is."
+  ]
+},
+{
+  id:"r-readability", category:"review", title:"Readability & Maintainability Audit",
+  purpose:"Checks how easy your code will be for someone else (or future you) to understand six months from now.",
+  tags:["readability","maintainability"],
+  variables:[
+    {key:"language", label:"Language", type:"select", options:LANGS, default:"Python", help:"Language of the code being audited."},
+    {key:"code", label:"Code to audit", type:"textarea", default:"def f(x, y, z=None):\n    r = x*y\n    if z: r = r + z\n    return r", help:"Paste the code you want assessed for clarity."},
+    {key:"audience", label:"Who will maintain this?", type:"select", options:["Just me","My immediate team","A team that's new to this codebase","Open source contributors"], default:"My immediate team", help:"Sets the bar for how much context needs to be self-evident."}
+  ],
+  template: tpl`<role>You are a staff engineer who reviews code specifically for long-term maintainability.</role>
+
+<objective>Audit the readability and maintainability of the code below, assuming it will be maintained by: {{audience}}.</objective>
+
+<context>
+{{code}}
+</context>
+
+<constraints>
+- Evaluate naming, function size, comment quality (missing or misleading), and cognitive load.
+- Don't suggest stylistic changes that don't affect actual comprehension.
+- Rate severity per issue: cosmetic / moderate / significant.
+</constraints>
+
+<output_format>
+Table: Issue | Why it hurts maintainability | Severity | Suggested fix
+Then a short paragraph: overall maintainability verdict for the stated audience.
+</output_format>
+
+<quality_checks>Would someone from the stated audience understand this code's purpose within 30 seconds, without asking the author?</quality_checks>`,
+  bestPractices:[
+    "Be honest about the audience — code fine for \"just me\" often fails for new team members.",
+    "Use this before code becomes load-bearing (i.e. before other code depends on it).",
+    "Combine with the Refactor workflow: audit first, then refactor the flagged issues.",
+    "Don't chase every cosmetic nit — focus on \"significant\" severity items first."
+  ]
+},
+{
+  id:"r-performance", category:"review", title:"Performance Review",
+  purpose:"Looks for likely performance issues — slow algorithms, unnecessary work, or costly patterns — before they hit production.",
+  tags:["performance","optimization"],
+  variables:[
+    {key:"language", label:"Language", type:"select", options:LANGS, default:"Python", help:"Language of the code being reviewed."},
+    {key:"code", label:"Code to review", type:"textarea", default:"def find_duplicates(items):\n    duplicates = []\n    for i in range(len(items)):\n        for j in range(len(items)):\n            if i != j and items[i] == items[j] and items[i] not in duplicates:\n                duplicates.append(items[i])\n    return duplicates", help:"Paste the code, query, or function you're concerned about."},
+    {key:"context", label:"Scale / environment", type:"select", options:["Small data, runs rarely","Runs on every request (hot path)","Large datasets (1000s+ items)","Real-time / latency-sensitive"], default:"Runs on every request (hot path)", help:"Performance issues matter differently depending on scale."}
+  ],
+  template: tpl`<role>You are a performance-focused senior engineer reviewing code for efficiency issues.</role>
+
+<objective>Identify likely performance issues in the code below.</objective>
+
+<context>
+{{code}}
+
+Scale/environment: {{context}}
+</context>
+
+<constraints>
+- State the current algorithmic complexity (time/space) if relevant.
+- Only flag issues that matter at the stated scale — don't over-optimize code that runs rarely on tiny data.
+- For each issue, propose a concrete fix, not just "this could be faster."
+- Note any correctness/readability trade-offs a fix would introduce.
+</constraints>
+
+<reasoning_strategy>Think step-by-step about what the code actually does per input growth (loops, queries, allocations) before proposing fixes.</reasoning_strategy>
+
+<output_format>
+1. Current complexity / cost summary
+2. Issues found, ranked by impact at the stated scale
+3. Suggested fix per issue (code snippet where useful)
+</output_format>`,
+  bestPractices:[
+    "Always state the real scale/environment — the same code can be fine or a real problem depending on context.",
+    "Don't optimize prematurely — this workflow is most valuable for hot paths and large-data code.",
+    "Benchmark suggested fixes where possible; complexity analysis is a strong hint, not a guarantee.",
+    "Pair with Refactoring Suggestions once you've picked which fixes to apply."
+  ]
+}
+];
+
+/* =========================================================
+   PROMPT BUILDER BLOCK DEFINITIONS
+   ========================================================= */
+const PB_BLOCKS = [
+  {key:"role", name:"Role", icon:ICONS.mine,
+   help:"Tells Claude what persona/expertise to adopt. This shapes vocabulary, judgment, and what it pays attention to — a 'security engineer' and a 'UX writer' will review the same text very differently.",
+   type:"select-or-text",
+   options:["Senior QA Engineer","Senior Software Engineer / Code Reviewer","Test Architect","Staff Engineer focused on maintainability","Security-focused code reviewer","Custom..."]},
+  {key:"objective", name:"Objective", icon:ICONS.check,
+   help:"The single clear task you want done. Being specific here (not \"help me with this code\") is the single biggest lever on output quality.",
+   type:"textarea", placeholder:"e.g. Write unit tests for the function below covering both typical and edge-case inputs."},
+  {key:"context", name:"Context", icon:ICONS.dashboard,
+   help:"The background material Claude needs — code, tickets, logs, requirements. Claude can only reason about what you give it, so include everything relevant here.",
+   type:"textarea", placeholder:"Paste code, error messages, requirements, or background info here."},
+  {key:"constraints", name:"Constraints", icon:ICONS.x,
+   help:"Hard boundaries the output must respect — things it must NOT do, or must always do. Explicit constraints prevent Claude from making assumptions that don't fit your situation.",
+   type:"select-or-text",
+   options:["Do not change the public API/signature","No new dependencies","Keep the response under 200 words","Follow existing code style exactly","Must be framework-agnostic","Custom..."]},
+  {key:"reasoning", name:"Reasoning strategy", icon:ICONS.bulb,
+   help:"How you want Claude to think before answering. Asking for step-by-step reasoning on complex tasks (like debugging or planning) meaningfully improves accuracy; simple tasks don't need it.",
+   type:"select",
+   options:["Think step-by-step before answering","Consider multiple approaches, then pick the best one","List assumptions first, then proceed","Use extended thinking for complex reasoning","No special reasoning needed — answer directly"]},
+  {key:"output_format", name:"Output format", icon:ICONS.builder,
+   help:"The shape you want the answer in. Specifying this up front saves a round-trip of \"can you reformat that as a table?\"",
+   type:"select",
+   options:["Markdown with headings","Numbered steps","Bullet list","Table","Code block only, no explanation","JSON"]},
+  {key:"tone", name:"Tone", icon:ICONS.edit,
+   help:"The voice of the response. Matters most when the output goes straight to another person (a teammate, a ticket, a doc) rather than just to you.",
+   type:"select",
+   options:["Concise and technical","Explanatory / teaching","Formal","Casual / conversational"]},
+  {key:"examples", name:"Examples", icon:ICONS.dup,
+   help:"One or two examples of the input/output pattern you want (\"few-shot\" prompting). Nothing anchors output quality faster than a good example — use this for anything with a specific style or structure you care about.",
+   type:"textarea", placeholder:"e.g. Input: ... → Expected output: ..."},
+  {key:"quality_checks", name:"Quality checks", icon:ICONS.check,
+   help:"A self-check you want Claude to run before finalizing its answer — a lightweight way to catch mistakes without a second round-trip from you.",
+   type:"select-or-text",
+   options:["Verify the answer actually satisfies every constraint above","Check for security issues before finalizing","Flag any assumptions that were made","Ensure the output is deterministic / reproducible","Custom..."]}
+];
+
+/* =========================================================
+   LOOP BUILDER BLOCK DEFINITIONS
+   ========================================================= */
+const LB_BLOCKS = [
+  {key:"goal", name:"Goal", icon:ICONS.check,
+   help:"The end-state that defines success for the whole loop — what \"done\" looks like, in one or two sentences. Every iteration is judged against this.",
+   type:"textarea", placeholder:"e.g. All unit tests pass and code coverage for this module is above 90%."},
+  {key:"task", name:"Base task", icon:ICONS.dashboard,
+   help:"The actual work to attempt each iteration — usually a prompt you already have (from your library or the Prompt Builder). This is what gets retried and revised.",
+   type:"textarea", placeholder:"Paste the base prompt/task here, or build one first in the Prompt Builder."},
+  {key:"evaluation", name:"Evaluation criteria", icon:ICONS.builder,
+   help:"How each attempt is scored — the concrete, checkable signals that tell Claude whether an attempt succeeded, partially succeeded, or failed. Vague criteria produce vague loops.",
+   type:"select-or-text",
+   options:["All tests pass","Code coverage above a stated threshold","No linter/type errors","Matches the stated acceptance criteria exactly","Custom..."]},
+  {key:"improvement", name:"Improvement strategy", icon:ICONS.loop,
+   help:"What Claude should do differently after a failed attempt — revise the whole thing, fix one issue at a time, try a different approach, or ask for clarification.",
+   type:"select",
+   options:["Revise and retry, incorporating feedback from the last attempt","Fix one issue at a time, most severe first","Try a meaningfully different approach if stuck twice","Ask a clarifying question if blocked, rather than guessing"]},
+  {key:"stop", name:"Stop conditions", icon:ICONS.x,
+   help:"When the loop must stop — success, a maximum number of tries, or no measurable progress. Without this, an autonomous loop can run indefinitely or thrash without improving.",
+   type:"select-or-text",
+   options:["Goal fully met","Maximum of 5 iterations reached","No improvement over the last 2 iterations","Human review explicitly requested","Custom..."]},
+  {key:"safety", name:"Safety rules", icon:ICONS.help,
+   help:"Guardrails the loop must never cross, regardless of how close it is to the goal — irreversible actions, scope boundaries, or anything requiring a human in the loop.",
+   type:"select-or-text",
+   options:["Never delete files or data without explicit confirmation","Never modify production configuration","Ask before taking any irreversible action","Stay strictly within the given file/folder scope","Custom..."]}
+];
+
+/* =========================================================
+   STATE
+   ========================================================= */
+const LS_KEYS = { custom:"pab_customWorkflows", fav:"pab_favorites", dismissed:"pab_explainerDismissed", theme:"pab_theme", onboarded:"pab_onboarded" };
+
+let state = {
+  route: "dashboard",
+  search: "",
+  workflowTab: "testing",
+  favOnly: false,
+  custom: loadJSON(LS_KEYS.custom, []),
+  favorites: loadJSON(LS_KEYS.fav, []),
+  pbBlocks: [],      // added block keys, in order, for prompt builder
+  pbValues: {},       // key -> value
+  lbBlocks: [],
+  lbValues: {},
+  sidebarOpen: false
+};
+
+function loadJSON(key, fallback){
+  try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; }
+}
+function saveJSON(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function uid(pref){ return pref+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+function allWorkflows(){ return TEMPLATES.concat(state.custom); }
+function findWorkflow(id){ return allWorkflows().find(w=>w.id===id); }
+function isFav(id){ return state.favorites.includes(id); }
+function toggleFav(id){
+  if(isFav(id)) state.favorites = state.favorites.filter(x=>x!==id);
+  else state.favorites.push(id);
+  saveJSON(LS_KEYS.fav, state.favorites);
+}
+
+/* =========================================================
+   NAV
+   ========================================================= */
+const NAV_ITEMS = [
+  {id:"dashboard", label:"Dashboard", icon:ICONS.dashboard, group:"main"},
+  {id:"wf-testing", label:"Testing & QA", icon:ICONS.testing, group:"workflows", cat:"testing"},
+  {id:"wf-review", label:"Code Review", icon:ICONS.review, group:"workflows", cat:"review"},
+  {id:"wf-mine", label:"My Workflows", icon:ICONS.mine, group:"workflows", cat:"mine"},
+  {id:"prompt-builder", label:"Prompt Builder", icon:ICONS.builder, group:"tools"},
+  {id:"loop-builder", label:"Loop Builder", icon:ICONS.loop, group:"tools"}
+];
+
+function renderNav(){
+  const groups = [
+    {key:"main", label:null},
+    {key:"workflows", label:"Workflows"},
+    {key:"tools", label:"Builders"}
+  ];
+  let html = "";
+  groups.forEach(g=>{
+    if(g.label) html += `<div class="nav-label">${g.label}</div>`;
+    NAV_ITEMS.filter(i=>i.group===g.key).forEach(item=>{
+      let count = "";
+      if(item.cat === "testing") count = TEMPLATES.filter(t=>t.category==='testing').length + state.custom.filter(t=>t.category==='testing').length;
+      if(item.cat === "review") count = TEMPLATES.filter(t=>t.category==='review').length + state.custom.filter(t=>t.category==='review').length;
+      if(item.cat === "mine") count = state.custom.length;
+      const active = state.route === item.id;
+      html += `<button class="nav-item ${active?'active':''}" data-route="${item.id}">${item.icon}<span>${item.label}</span>${count!==""?`<span class="nav-count">${count}</span>`:""}</button>`;
+    });
+  });
+  document.getElementById("navList").innerHTML = html;
+  document.querySelectorAll(".nav-item").forEach(b=>b.addEventListener("click", ()=>{ navigate(b.dataset.route); state.sidebarOpen=false; document.getElementById("sidebar").classList.remove("open"); }));
+}
+
+function navigate(route){
+  state.route = route;
+  render();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+/* =========================================================
+   RENDER ROOT
+   ========================================================= */
+function render(){
+  renderNav();
+  const titleMap = {
+    "dashboard":["Dashboard","Your saved AI prompt workflows, at a glance"],
+    "wf-testing":["Testing & QA","Reusable prompt workflows for tests, coverage, and QA planning"],
+    "wf-review":["Code Review & Refactoring","Reusable prompt workflows for reviews, refactors, and audits"],
+    "wf-mine":["My Workflows","Workflows you've created, edited, or favorited"],
+    "prompt-builder":["Prompt Builder","Assemble a structured prompt from reusable building blocks"],
+    "loop-builder":["Loop Builder","Turn any prompt into a self-checking, self-improving loop"]
+  };
+  const [t,s] = titleMap[state.route] || titleMap.dashboard;
+  document.getElementById("pageTitle").textContent = t;
+  document.getElementById("pageSub").textContent = s;
+
+  const c = document.getElementById("content");
+  if(state.route === "dashboard") c.innerHTML = renderDashboard();
+  else if(state.route === "wf-testing"){ state.workflowTab="testing"; c.innerHTML = renderWorkflowLibrary(); }
+  else if(state.route === "wf-review"){ state.workflowTab="review"; c.innerHTML = renderWorkflowLibrary(); }
+  else if(state.route === "wf-mine"){ state.workflowTab="mine"; c.innerHTML = renderWorkflowLibrary(); }
+  else if(state.route === "prompt-builder") c.innerHTML = renderPromptBuilder();
+  else if(state.route === "loop-builder") c.innerHTML = renderLoopBuilder();
+
+  attachContentHandlers();
+}
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+function renderDashboard(){
+  const testingCount = TEMPLATES.filter(t=>t.category==='testing').length + state.custom.filter(t=>t.category==='testing').length;
+  const reviewCount = TEMPLATES.filter(t=>t.category==='review').length + state.custom.filter(t=>t.category==='review').length;
+  const explainerDismissed = loadJSON(LS_KEYS.dismissed, false);
+
+  return `
+  ${explainerDismissed ? "" : explainerHTML()}
+  <div class="stat-grid">
+    <div class="stat-card"><div class="num">${testingCount+reviewCount}</div><div class="lbl">Total workflows available</div></div>
+    <div class="stat-card"><div class="num">${state.custom.length}</div><div class="lbl">Workflows you've created</div></div>
+    <div class="stat-card"><div class="num">${state.favorites.length}</div><div class="lbl">Favorited for quick access</div></div>
+    <div class="stat-card"><div class="num">${TEMPLATES.length}</div><div class="lbl">Built-in starting templates</div></div>
+  </div>
+
+  <div class="section-head"><h2>Workflow categories</h2><p>Pick a category to browse ready-made prompt workflows, or build your own below.</p></div>
+  <div class="cat-grid">
+    ${CATEGORIES.map(cat=>`
+      <div class="cat-card ${cat.id==='review'?'review':''}" data-route="wf-${cat.id}">
+        <div class="tag">${cat.icon}${cat.label}</div>
+        <h3>${cat.label}</h3>
+        <p>${cat.desc}</p>
+        <div class="cnt">${cat.id==='testing'?testingCount:reviewCount} workflows available</div>
+      </div>
+    `).join("")}
+  </div>
+
+  <div class="section-head"><h2>Build something new</h2><p>Don't see the exact workflow you need? Assemble one from scratch.</p></div>
+  <div class="quick-row">
+    <div class="quick-card" data-route="prompt-builder">
+      <div class="quick-icon pb">${ICONS.builder}</div>
+      <div><h4>Prompt Builder</h4><p>Assemble a structured prompt block-by-block, with a live preview.</p></div>
+    </div>
+    <div class="quick-card" data-route="loop-builder">
+      <div class="quick-icon lb">${ICONS.loop}</div>
+      <div><h4>Loop Builder</h4><p>Turn any prompt into a self-evaluating, self-improving loop.</p></div>
+    </div>
+  </div>
+  `;
+}
+
+function explainerHTML(){
+  return `
+  <div class="explainer" id="explainerBox">
+    <div class="explainer-icon">${ICONS.bulb}</div>
+    <div>
+      <h3>What is the Personal AI Playbook?</h3>
+      <p>This is a personal toolkit for working with Claude on testing and code review — instead of rewriting prompts from scratch every time, you keep a library of reusable <b>workflows</b> (structured, fill-in-the-blank prompt templates) and two builders for making new ones.</p>
+      <ul>
+        <li><b>Testing &amp; QA / Code Review</b> — ready-made workflows: fill in a few fields, get a complete, structured prompt to paste into Claude.</li>
+        <li><b>Prompt Builder</b> — assemble a one-off prompt from building blocks (role, objective, constraints, etc.) with a live preview as you go.</li>
+        <li><b>Loop Builder</b> — take any prompt and turn it into an autonomous loop that checks its own work against goals you define, and knows when to stop.</li>
+        <li><b>My Workflows</b> — anything you save, duplicate, or favorite lives here, stored only in this browser.</li>
+      </ul>
+    </div>
+    <button class="explainer-close" id="explainerClose" title="Dismiss (you can reopen this anytime from the Help button)">${ICONS.x}</button>
+  </div>`;
+}
+
+/* =========================================================
+   WORKFLOW LIBRARY
+   ========================================================= */
+function renderWorkflowLibrary(){
+  const tab = state.workflowTab;
+  let list;
+  if(tab === "mine") list = state.custom.slice();
+  else list = TEMPLATES.filter(t=>t.category===tab).concat(state.custom.filter(t=>t.category===tab));
+
+  if(state.favOnly) list = list.filter(w=>isFav(w.id));
+  if(state.search.trim()){
+    const q = state.search.toLowerCase();
+    list = list.filter(w => w.title.toLowerCase().includes(q) || w.purpose.toLowerCase().includes(q) || (w.tags||[]).some(t=>t.toLowerCase().includes(q)));
+  }
+
+  const subtitle = tab==="testing" ? "Turn recurring testing &amp; QA work into repeatable prompts." :
+                    tab==="review" ? "Turn recurring code review work into repeatable prompts." :
+                    "Everything you've personally created, edited, or starred, saved in this browser.";
+
+  return `
+  <p style="font-size:13px;color:var(--text-mute);margin:-6px 0 18px;">${subtitle}</p>
+  <div class="toolbar">
+    <div class="tabs">
+      <button class="tab ${tab==='testing'?'active':''}" data-tab="testing">Testing & QA</button>
+      <button class="tab ${tab==='review'?'active':''}" data-tab="review">Code Review</button>
+      <button class="tab ${tab==='mine'?'active':''}" data-tab="mine">My Workflows</button>
+    </div>
+    <button class="fav-toggle ${state.favOnly?'on':''}" id="favOnlyBtn">${state.favOnly?ICONS.star:ICONS.starOutline} Favorites only</button>
+    <div style="flex:1"></div>
+    <button class="btn btn-primary" id="newWorkflowBtn">${ICONS.plus} New workflow</button>
+  </div>
+  <div class="wf-grid">
+    ${list.length ? list.map(w=>workflowCard(w)).join("") : `
+      <div class="empty-state" style="grid-column:1/-1;">
+        ${ICONS.testing}
+        <h4>${state.search? "No workflows match your search" : (tab==="mine" ? "No custom workflows yet" : "Nothing here yet")}</h4>
+        <p>${state.search ? "Try a different search term, or clear it to see everything in this category." : (tab==="mine" ? "Save a workflow from the library, or build one from scratch in the Prompt Builder." : "Try another category or clear your filters.")}</p>
+      </div>`}
+  </div>`;
+}
+
+function workflowCard(w){
+  const isCustom = !!w.custom;
+  return `
+  <div class="wf-card" data-open="${w.id}">
+    <div class="wf-top">
+      <div class="wf-title">${esc(w.title)}</div>
+      <button class="star-btn ${isFav(w.id)?'on':''}" data-star="${w.id}" title="Favorite this workflow">${isFav(w.id)?ICONS.star:ICONS.starOutline}</button>
+    </div>
+    <div class="wf-desc">${esc(w.purpose)}</div>
+    <div class="wf-tags">${(w.tags||[]).map(t=>`<span class="wf-tag">${esc(t)}</span>`).join("")}</div>
+    <div class="wf-foot">
+      <span class="wf-badge ${isCustom?'custom':''}">${isCustom?ICONS.mine+' Custom':ICONS.check+' Built-in'}</span>
+      <span style="font-size:11px;color:var(--text-mute);">${(w.variables||[]).length} field${(w.variables||[]).length===1?'':'s'}</span>
+    </div>
+  </div>`;
+}
+
+/* =========================================================
+   WORKFLOW DETAIL PANEL
+   ========================================================= */
+let detailState = { id:null, values:{} };
+
+function openDetail(id){
+  const w = findWorkflow(id);
+  if(!w) return;
+  detailState = { id, values:{} };
+  (w.variables||[]).forEach(v=> detailState.values[v.key] = v.default || "");
+  renderDetailPanel();
+  document.getElementById("detailOverlay").classList.add("show");
+}
+function closeDetail(){ document.getElementById("detailOverlay").classList.remove("show"); }
+
+function fillTemplate(w){
+  let out = w.template;
+  (w.variables||[]).forEach(v=>{
+    const val = detailState.values[v.key] || "";
+    out = out.split("{{"+v.key+"}}").join(val);
+  });
+  return out;
+}
+
+function renderDetailPanel(){
+  const w = findWorkflow(detailState.id);
+  if(!w) return;
+  const isCustom = !!w.custom;
+  const filled = fillTemplate(w);
+
+  document.getElementById("detailPanel").innerHTML = `
+    <div class="panel-head">
+      <div class="htxt">
+        <h2>${esc(w.title)}</h2>
+        <p>${esc(w.purpose)}</p>
+      </div>
+      <button class="panel-close" id="closeDetailBtn">${ICONS.x}</button>
+    </div>
+    <div class="panel-body">
+      <div class="subhead">Fill in the details</div>
+      <div id="varFields">${(w.variables||[]).map(v=>fieldHTML(v, detailState.values[v.key])).join("")}</div>
+
+      <div class="subhead">Live prompt preview <button class="copy-fab" id="copyBtn" style="margin-left:auto;">${ICONS.copy} Copy prompt</button></div>
+      <div class="term-box">
+        <div class="term-bar">
+          <span class="term-dot" style="background:#F1667A;"></span>
+          <span class="term-dot" style="background:#F5A623;"></span>
+          <span class="term-dot" style="background:#2DD4BF;"></span>
+          <span class="term-title">ready to paste into Claude</span>
+        </div>
+        <div class="term-body" id="previewBody">${esc(filled)}</div>
+      </div>
+
+      ${w.bestPractices ? `
+      <div class="subhead">Best practices</div>
+      <ul class="bp-list">${w.bestPractices.map(bp=>`<li>${ICONS.check}<span>${esc(bp)}</span></li>`).join("")}</ul>` : ""}
+    </div>
+    <div class="panel-actions">
+      <button class="btn btn-primary" id="copyBtn2">${ICONS.copy} Copy prompt</button>
+      <button class="btn btn-ghost" id="dupBtn">${ICONS.dup} Duplicate</button>
+      ${isCustom ? `<button class="btn btn-ghost" id="editBtn">${ICONS.edit} Edit</button>` : ""}
+      ${isCustom ? `<button class="btn btn-danger" id="delBtn">${ICONS.trash} Delete</button>` : ""}
+      <button class="btn btn-outline" id="favBtnPanel" style="margin-left:auto;">${isFav(w.id)?ICONS.star:ICONS.starOutline} ${isFav(w.id)?'Favorited':'Favorite'}</button>
+    </div>
+  `;
+
+  // wire events
+  document.getElementById("closeDetailBtn").onclick = closeDetail;
+  document.getElementById("copyBtn").onclick = ()=>copyText(fillTemplate(w));
+  document.getElementById("copyBtn2").onclick = ()=>copyText(fillTemplate(w));
+  document.getElementById("favBtnPanel").onclick = ()=>{ toggleFav(w.id); renderDetailPanel(); render(); };
+  document.getElementById("dupBtn").onclick = ()=>{ duplicateWorkflow(w); };
+  if(isCustom){
+    document.getElementById("editBtn").onclick = ()=> openWorkflowEditor(w);
+    document.getElementById("delBtn").onclick = ()=>{
+      if(confirm("Delete this workflow? This can't be undone.")){
+        state.custom = state.custom.filter(x=>x.id!==w.id);
+        saveJSON(LS_KEYS.custom, state.custom);
+        closeDetail(); render();
+      }
+    };
+  }
+  document.querySelectorAll("#varFields [data-field]").forEach(el=>{
+    el.addEventListener("input", ()=>{
+      detailState.values[el.dataset.field] = el.value;
+      document.getElementById("previewBody").innerHTML = esc(fillTemplate(w));
+    });
+  });
+}
+
+function fieldHTML(v, value){
+  const help = `<div class="hint">${esc(v.help||"")}</div>`;
+  if(v.type === "select"){
+    return `<div class="field"><label>${esc(v.label)}</label>${help}<select data-field="${v.key}">${v.options.map(o=>`<option value="${esc(o)}" ${o===value?'selected':''}>${esc(o)}</option>`).join("")}</select></div>`;
+  }
+  if(v.type === "textarea"){
+    return `<div class="field"><label>${esc(v.label)}</label>${help}<textarea data-field="${v.key}" rows="4">${esc(value)}</textarea></div>`;
+  }
+  return `<div class="field"><label>${esc(v.label)}</label>${help}<input type="text" data-field="${v.key}" value="${esc(value)}"></div>`;
+}
+
+function copyText(text){
+  const done = ()=> showToast("Prompt copied to clipboard");
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text, done));
+  } else fallbackCopy(text, done);
+}
+function fallbackCopy(text, cb){
+  const ta = document.createElement("textarea");
+  ta.value = text; document.body.appendChild(ta); ta.select();
+  try{ document.execCommand("copy"); }catch(e){}
+  document.body.removeChild(ta); cb();
+}
+
+function duplicateWorkflow(w){
+  const copy = JSON.parse(JSON.stringify(w));
+  copy.id = uid("wf");
+  copy.title = w.title + " (copy)";
+  copy.custom = true;
+  state.custom.push(copy);
+  saveJSON(LS_KEYS.custom, state.custom);
+  showToast("Duplicated to My Workflows");
+  render();
+}
+
+/* =========================================================
+   NEW / EDIT WORKFLOW MODAL
+   ========================================================= */
+function openWorkflowEditor(existing){
+  const isEdit = !!existing;
+  const w = existing ? JSON.parse(JSON.stringify(existing)) : {
+    id: uid("wf"), category:"testing", title:"", purpose:"", tags:[], template:"", bestPractices:[], variables:[], custom:true
+  };
+  document.getElementById("modalBox").innerHTML = `
+    <div class="modal-head">
+      <div><h3>${isEdit? "Edit workflow":"New custom workflow"}</h3><p>Custom workflows are saved to this browser and show up under My Workflows.</p></div>
+      <button class="panel-close" id="modalCloseX">${ICONS.x}</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Title</label><input type="text" id="ewTitle" value="${esc(w.title)}" placeholder="e.g. API Contract Test Generator"></div>
+      <div class="field"><label>Category</label>
+        <select id="ewCategory">
+          <option value="testing" ${w.category==='testing'?'selected':''}>Testing & QA</option>
+          <option value="review" ${w.category==='review'?'selected':''}>Code Review & Refactoring</option>
+        </select>
+      </div>
+      <div class="field"><label>Purpose</label><div class="hint">One or two sentences: what does this workflow do, and when should someone use it?</div><textarea id="ewPurpose" rows="2">${esc(w.purpose)}</textarea></div>
+      <div class="field"><label>Prompt template</label><div class="hint">Use {{variable_name}} for any fill-in-the-blank fields. Structured tags like &lt;role&gt;, &lt;objective&gt;, &lt;constraints&gt; work well with Claude.</div><textarea id="ewTemplate" rows="8">${esc(w.template)}</textarea></div>
+      <div class="field"><label>Tags (comma separated)</label><input type="text" id="ewTags" value="${esc((w.tags||[]).join(", "))}"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" id="ewCancel">Cancel</button>
+      <button class="btn btn-primary" id="ewSave">${ICONS.check} Save workflow</button>
+    </div>
+  `;
+  showModal();
+  document.getElementById("modalCloseX").onclick = hideModal;
+  document.getElementById("ewCancel").onclick = hideModal;
+  document.getElementById("ewSave").onclick = ()=>{
+    const title = document.getElementById("ewTitle").value.trim();
+    const template = document.getElementById("ewTemplate").value.trim();
+    if(!title || !template){ showToast("Title and template are required"); return; }
+    w.title = title;
+    w.category = document.getElementById("ewCategory").value;
+    w.purpose = document.getElementById("ewPurpose").value.trim() || "A custom workflow.";
+    w.template = template;
+    w.tags = document.getElementById("ewTags").value.split(",").map(s=>s.trim()).filter(Boolean);
+    // auto-detect variables from {{...}} not already defined
+    const found = Array.from(new Set((template.match(/{{\s*[\w]+\s*}}/g)||[]).map(m=>m.replace(/[{}]/g,'').trim())));
+    const existingKeys = (w.variables||[]).map(v=>v.key);
+    found.forEach(k=>{
+      if(!existingKeys.includes(k)) w.variables = (w.variables||[]).concat([{key:k, label:k.replace(/_/g,' '), type:"textarea", default:"", help:"Fill in a value for "+k+"."}]);
+    });
+    w.variables = (w.variables||[]).filter(v=>found.includes(v.key));
+    w.custom = true;
+    if(isEdit){
+      const idx = state.custom.findIndex(x=>x.id===w.id);
+      if(idx>-1) state.custom[idx] = w;
+    } else {
+      state.custom.push(w);
+    }
+    saveJSON(LS_KEYS.custom, state.custom);
+    hideModal();
+    showToast(isEdit? "Workflow updated" : "Workflow saved to My Workflows");
+    render();
+    if(isEdit) openDetail(w.id);
+  };
+}
+
+/* =========================================================
+   PROMPT BUILDER
+   ========================================================= */
+function pbAssemble(){
+  return PB_BLOCKS.filter(b=>state.pbBlocks.includes(b.key)).map(b=>{
+    const val = state.pbValues[b.key] || "";
+    const tag = b.key;
+    return `<${tag}>${val}</${tag}>`;
+  }).join("\n\n");
+}
+
+function renderPromptBuilder(){
+  const added = state.pbBlocks;
+  const available = PB_BLOCKS.filter(b=>!added.includes(b.key));
+  return `
+  <p style="font-size:13px;color:var(--text-mute);margin:-6px 0 18px;max-width:640px;">Build a one-off prompt from reusable pieces. Add the blocks you need, fill each one in, and copy the assembled result straight into Claude. Nothing here is saved automatically — use "Save as workflow" if you want to reuse it later.</p>
+  <div class="builder-layout">
+    <div class="block-picker">
+      <h4>Available blocks</h4>
+      <div class="sub">Click a block to add it to your prompt. Each one explains what it does and why it matters.</div>
+      ${PB_BLOCKS.map(b=>`
+        <div class="pick-item ${added.includes(b.key)?'added':''}" data-add-pb="${b.key}">
+          <div class="pick-icon">${b.icon}</div>
+          <div class="pick-txt"><strong>${b.name}</strong><span>${b.help}</span></div>
+        </div>`).join("")}
+    </div>
+    <div>
+      <div class="assembled" id="pbAssembled">
+        ${added.length ? added.map((k,i)=>pbBlockCard(k,i)).join("") : `<div class="builder-empty">No blocks added yet. Start with <b>Role</b> and <b>Objective</b> — they usually matter most.</div>`}
+      </div>
+      ${added.length ? `
+      <div class="subhead">Live preview <button class="copy-fab" id="pbCopy" style="margin-left:auto;">${ICONS.copy} Copy prompt</button></div>
+      <div class="term-box">
+        <div class="term-bar"><span class="term-dot" style="background:#F1667A;"></span><span class="term-dot" style="background:#F5A623;"></span><span class="term-dot" style="background:#2DD4BF;"></span><span class="term-title">assembled prompt</span></div>
+        <div class="term-body" id="pbPreview">${esc(pbAssemble())}<span class="term-cursor"></span></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="btn btn-primary" id="pbSaveWorkflow">${ICONS.check} Save as workflow</button>
+        <button class="btn btn-outline" id="pbReset">Reset</button>
+      </div>` : ""}
+    </div>
+  </div>`;
+}
+
+function pbBlockCard(key, idx){
+  const b = PB_BLOCKS.find(x=>x.key===key);
+  const val = state.pbValues[key] || "";
+  let control = "";
+  if(b.type === "textarea"){
+    control = `<textarea data-pb="${key}" rows="3" placeholder="${esc(b.placeholder||'')}">${esc(val)}</textarea>`;
+  } else if(b.type === "select"){
+    control = `<select data-pb="${key}">${b.options.map(o=>`<option ${o===val?'selected':''}>${esc(o)}</option>`).join("")}</select>`;
+  } else if(b.type === "select-or-text"){
+    const isCustom = val && !b.options.slice(0,-1).includes(val);
+    control = `
+      <select data-pb-select="${key}">${b.options.map(o=>`<option ${(o===val||(isCustom&&o==='Custom...'))?'selected':''}>${esc(o)}</option>`).join("")}</select>
+      <input type="text" data-pb="${key}" style="margin-top:6px;${(val==='Custom...'||isCustom)?'':'display:none;'}" placeholder="Type your own..." value="${isCustom?esc(val):''}">
+    `;
+  }
+  return `
+  <div class="blk-card">
+    <div class="blk-head">
+      <div class="lft"><span class="blk-num">${idx+1}</span><strong>${b.name}</strong></div>
+      <button class="blk-remove" data-remove-pb="${key}" title="Remove this block">${ICONS.x}</button>
+    </div>
+    <p class="blk-help">${b.help}</p>
+    ${control}
+  </div>`;
+}
+
+/* =========================================================
+   LOOP BUILDER
+   ========================================================= */
+function lbAssemble(){
+  const order = LB_BLOCKS.filter(b=>state.lbBlocks.includes(b.key));
+  const parts = order.map(b=>`<${b.key}>${state.lbValues[b.key]||""}</${b.key}>`).join("\n\n");
+  if(!order.length) return "";
+  return parts + `\n\nLOOP INSTRUCTIONS:\nRepeat the following cycle: (1) attempt the base task, (2) evaluate the result strictly against the evaluation criteria, (3) if the goal is not yet met and no stop condition has been triggered, revise using the improvement strategy above and try again. Never violate the safety rules above, even if it would help reach the goal faster. Stop and report back as soon as any stop condition is met.`;
+}
+
+function renderLoopBuilder(){
+  const added = state.lbBlocks;
+  return `
+  <p style="font-size:13px;color:var(--text-mute);margin:-6px 0 18px;max-width:660px;">A <b>loop prompt</b> doesn't just ask Claude to do a task once — it asks Claude to attempt the task, judge its own result, and try again until it meets a goal or hits a stop condition. Useful for iterative work like "keep refining these tests until they all pass." Fill in each block below to build one.</p>
+  <div class="builder-layout">
+    <div class="block-picker">
+      <h4>Loop building blocks</h4>
+      <div class="sub">Add these in order — each one explains what it controls in the loop.</div>
+      ${LB_BLOCKS.map(b=>`
+        <div class="pick-item ${added.includes(b.key)?'added':''}" data-add-lb="${b.key}">
+          <div class="pick-icon">${b.icon}</div>
+          <div class="pick-txt"><strong>${b.name}</strong><span>${b.help}</span></div>
+        </div>`).join("")}
+    </div>
+    <div>
+      <div class="assembled" id="lbAssembled">
+        ${added.length ? added.map((k,i)=>lbBlockCard(k,i)).join("") : `<div class="builder-empty">No blocks added yet. Start with <b>Goal</b> and <b>Base task</b> — everything else configures how the loop behaves around those.</div>`}
+      </div>
+      ${added.length ? `
+      <div class="subhead">Live preview <button class="copy-fab" id="lbCopy" style="margin-left:auto;">${ICONS.copy} Copy prompt</button></div>
+      <div class="term-box">
+        <div class="term-bar"><span class="term-dot" style="background:#F1667A;"></span><span class="term-dot" style="background:#F5A623;"></span><span class="term-dot" style="background:#2DD4BF;"></span><span class="term-title">autonomous loop prompt</span></div>
+        <div class="term-body" id="lbPreview">${esc(lbAssemble())}<span class="term-cursor"></span></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="btn btn-primary" id="lbSaveWorkflow">${ICONS.check} Save as workflow</button>
+        <button class="btn btn-outline" id="lbReset">Reset</button>
+      </div>` : ""}
+    </div>
+  </div>`;
+}
+
+function lbBlockCard(key, idx){
+  const b = LB_BLOCKS.find(x=>x.key===key);
+  const val = state.lbValues[key] || "";
+  let control = "";
+  if(b.type === "textarea"){
+    control = `<textarea data-lb="${key}" rows="3" placeholder="${esc(b.placeholder||'')}">${esc(val)}</textarea>`;
+  } else if(b.type === "select"){
+    control = `<select data-lb="${key}">${b.options.map(o=>`<option ${o===val?'selected':''}>${esc(o)}</option>`).join("")}</select>`;
+  } else if(b.type === "select-or-text"){
+    const isCustom = val && !b.options.slice(0,-1).includes(val);
+    control = `
+      <select data-lb-select="${key}">${b.options.map(o=>`<option ${(o===val||(isCustom&&o==='Custom...'))?'selected':''}>${esc(o)}</option>`).join("")}</select>
+      <input type="text" data-lb="${key}" style="margin-top:6px;${(val==='Custom...'||isCustom)?'':'display:none;'}" placeholder="Type your own..." value="${isCustom?esc(val):''}">
+    `;
+  }
+  return `
+  <div class="blk-card">
+    <div class="blk-head">
+      <div class="lft"><span class="blk-num">${idx+1}</span><strong>${b.name}</strong></div>
+      <button class="blk-remove" data-remove-lb="${key}" title="Remove this block">${ICONS.x}</button>
+    </div>
+    <p class="blk-help">${b.help}</p>
+    ${control}
+  </div>`;
+}
+
+/* =========================================================
+   CONTENT EVENT DELEGATION
+   ========================================================= */
+function attachContentHandlers(){
+  const content = document.getElementById("content");
+
+  content.querySelectorAll("[data-route]").forEach(el=>{
+    el.addEventListener("click", ()=> navigate(el.dataset.route));
+  });
+
+  // explainer dismiss
+  const closeBtn = document.getElementById("explainerClose");
+  if(closeBtn) closeBtn.addEventListener("click", ()=>{
+    saveJSON(LS_KEYS.dismissed, true);
+    document.getElementById("explainerBox").remove();
+  });
+
+  // workflow cards
+  content.querySelectorAll("[data-open]").forEach(el=>{
+    el.addEventListener("click", (e)=>{
+      if(e.target.closest("[data-star]")) return;
+      openDetail(el.dataset.open);
+    });
+  });
+  content.querySelectorAll("[data-star]").forEach(el=>{
+    el.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      toggleFav(el.dataset.star);
+      render();
+    });
+  });
+
+  // tabs
+  content.querySelectorAll("[data-tab]").forEach(el=>{
+    el.addEventListener("click", ()=>{ navigate("wf-"+el.dataset.tab); });
+  });
+  const favBtn = document.getElementById("favOnlyBtn");
+  if(favBtn) favBtn.addEventListener("click", ()=>{ state.favOnly = !state.favOnly; render(); });
+  const newBtn = document.getElementById("newWorkflowBtn");
+  if(newBtn) newBtn.addEventListener("click", ()=> openWorkflowEditor(null));
+
+  // prompt builder
+  content.querySelectorAll("[data-add-pb]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const key = el.dataset.addPb;
+      if(!state.pbBlocks.includes(key)){ state.pbBlocks.push(key); if(state.pbValues[key]===undefined) state.pbValues[key]=""; render(); }
+    });
+  });
+  content.querySelectorAll("[data-remove-pb]").forEach(el=>{
+    el.addEventListener("click", ()=>{ state.pbBlocks = state.pbBlocks.filter(k=>k!==el.dataset.removePb); render(); });
+  });
+  content.querySelectorAll("[data-pb]").forEach(el=>{
+    el.addEventListener("input", ()=>{
+      state.pbValues[el.dataset.pb] = el.value;
+      const pv = document.getElementById("pbPreview");
+      if(pv) pv.innerHTML = esc(pbAssemble())+'<span class="term-cursor"></span>';
+    });
+  });
+  content.querySelectorAll("[data-pb-select]").forEach(el=>{
+    el.addEventListener("change", ()=>{
+      const key = el.dataset.pbSelect;
+      const input = content.querySelector(`input[data-pb="${key}"]`);
+      if(el.value === "Custom..."){ input.style.display=""; input.focus(); state.pbValues[key]=input.value; }
+      else { input.style.display="none"; state.pbValues[key]=el.value; }
+      const pv = document.getElementById("pbPreview");
+      if(pv) pv.innerHTML = esc(pbAssemble())+'<span class="term-cursor"></span>';
+    });
+  });
+  const pbCopy = document.getElementById("pbCopy");
+  if(pbCopy) pbCopy.addEventListener("click", ()=>copyText(pbAssemble()));
+  const pbReset = document.getElementById("pbReset");
+  if(pbReset) pbReset.addEventListener("click", ()=>{ state.pbBlocks=[]; state.pbValues={}; render(); });
+  const pbSave = document.getElementById("pbSaveWorkflow");
+  if(pbSave) pbSave.addEventListener("click", ()=>{
+    const w = {
+      id: uid("wf"), category:"testing", title:"Custom prompt ("+new Date().toLocaleDateString()+")",
+      purpose:"Saved from the Prompt Builder.", tags:["from prompt builder"],
+      template: pbAssemble(), variables:[], bestPractices:[], custom:true
+    };
+    state.custom.push(w); saveJSON(LS_KEYS.custom, state.custom);
+    showToast("Saved to My Workflows"); navigate("wf-mine"); openDetail(w.id);
+  });
+
+  // loop builder
+  content.querySelectorAll("[data-add-lb]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const key = el.dataset.addLb;
+      if(!state.lbBlocks.includes(key)){ state.lbBlocks.push(key); if(state.lbValues[key]===undefined) state.lbValues[key]=""; render(); }
+    });
+  });
+  content.querySelectorAll("[data-remove-lb]").forEach(el=>{
+    el.addEventListener("click", ()=>{ state.lbBlocks = state.lbBlocks.filter(k=>k!==el.dataset.removeLb); render(); });
+  });
+  content.querySelectorAll("[data-lb]").forEach(el=>{
+    el.addEventListener("input", ()=>{
+      state.lbValues[el.dataset.lb] = el.value;
+      const pv = document.getElementById("lbPreview");
+      if(pv) pv.innerHTML = esc(lbAssemble())+'<span class="term-cursor"></span>';
+    });
+  });
+  content.querySelectorAll("[data-lb-select]").forEach(el=>{
+    el.addEventListener("change", ()=>{
+      const key = el.dataset.lbSelect;
+      const input = content.querySelector(`input[data-lb="${key}"]`);
+      if(el.value === "Custom..."){ input.style.display=""; input.focus(); state.lbValues[key]=input.value; }
+      else { input.style.display="none"; state.lbValues[key]=el.value; }
+      const pv = document.getElementById("lbPreview");
+      if(pv) pv.innerHTML = esc(lbAssemble())+'<span class="term-cursor"></span>';
+    });
+  });
+  const lbCopy = document.getElementById("lbCopy");
+  if(lbCopy) lbCopy.addEventListener("click", ()=>copyText(lbAssemble()));
+  const lbReset = document.getElementById("lbReset");
+  if(lbReset) lbReset.addEventListener("click", ()=>{ state.lbBlocks=[]; state.lbValues={}; render(); });
+  const lbSave = document.getElementById("lbSaveWorkflow");
+  if(lbSave) lbSave.addEventListener("click", ()=>{
+    const w = {
+      id: uid("wf"), category:"testing", title:"Custom loop ("+new Date().toLocaleDateString()+")",
+      purpose:"Saved from the Loop Builder.", tags:["from loop builder","autonomous loop"],
+      template: lbAssemble(), variables:[], bestPractices:[], custom:true
+    };
+    state.custom.push(w); saveJSON(LS_KEYS.custom, state.custom);
+    showToast("Saved to My Workflows"); navigate("wf-mine"); openDetail(w.id);
+  });
+}
+
+/* =========================================================
+   MODALS: onboarding / help / shortcuts
+   ========================================================= */
+function showModal(){ document.getElementById("modalBg").classList.add("show"); }
+function hideModal(){ document.getElementById("modalBg").classList.remove("show"); }
+
+function openOnboarding(){
+  document.getElementById("modalBox").innerHTML = `
+    <div class="modal-head">
+      <div><h3>Welcome to your Personal AI Playbook</h3><p>A quick tour of what this is and how it's organized.</p></div>
+      <button class="panel-close" id="obClose">${ICONS.x}</button>
+    </div>
+    <div class="modal-body">
+      <div class="onb-steps">
+        <div class="onb-step"><div class="onb-num">1</div><div><h5>Workflows are reusable, not one-off</h5><p>Instead of a static list of prompts, each workflow is a fill-in-the-blank template — change the fields, get a new prompt, every time.</p></div></div>
+        <div class="onb-step"><div class="onb-num">2</div><div><h5>Prompt Builder</h5><p>Assemble a custom prompt from building blocks like role, objective, and constraints, with a live preview as you go.</p></div></div>
+        <div class="onb-step"><div class="onb-num">3</div><div><h5>Loop Builder</h5><p>Turn any prompt into an autonomous loop that checks its own work and knows when to stop.</p></div></div>
+        <div class="onb-step"><div class="onb-num">4</div><div><h5>Everything is saved locally</h5><p>Custom workflows and favorites are stored in this browser only. Use Export any time to back them up.</p></div></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" id="obStart">${ICONS.check} Get started</button></div>
+  `;
+  showModal();
+  document.getElementById("obClose").onclick = hideModal;
+  document.getElementById("obStart").onclick = ()=>{ hideModal(); saveJSON(LS_KEYS.onboarded, true); };
+}
+
+function openHelp(){
+  document.getElementById("modalBox").innerHTML = `
+    <div class="modal-head">
+      <div><h3>What is this?</h3><p>A plain-language explanation of every section, plus keyboard shortcuts.</p></div>
+      <button class="panel-close" id="helpClose">${ICONS.x}</button>
+    </div>
+    <div class="modal-body">
+      ${explainerBody()}
+      <div class="subhead" style="margin-top:22px;">Keyboard shortcuts</div>
+      <div class="shortcut-grid">
+        <div class="shortcut-row"><span>Focus search</span><kbd>/</kbd></div>
+        <div class="shortcut-row"><span>New custom workflow</span><kbd>N</kbd></div>
+        <div class="shortcut-row"><span>Toggle dark / light mode</span><kbd>D</kbd></div>
+        <div class="shortcut-row"><span>Open this help panel</span><kbd>Shift + /</kbd></div>
+        <div class="shortcut-row"><span>Close any panel or modal</span><kbd>Esc</kbd></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" id="helpReplayOnboarding">Replay welcome tour</button>
+      <button class="btn btn-primary" id="helpGotIt">${ICONS.check} Got it</button>
+    </div>
+  `;
+  showModal();
+  document.getElementById("helpClose").onclick = hideModal;
+  document.getElementById("helpGotIt").onclick = hideModal;
+  document.getElementById("helpReplayOnboarding").onclick = ()=>{ hideModal(); setTimeout(openOnboarding, 150); };
+}
+function explainerBody(){
+  return `
+  <p style="font-size:13px;color:var(--text-dim);line-height:1.6;">This is a personal toolkit for working with Claude on testing and code review. Instead of rewriting prompts from scratch, you keep a library of reusable <b>workflows</b> — fill-in-the-blank prompt templates — plus two builders for making new ones.</p>
+  <ul style="font-size:13px;color:var(--text-dim);line-height:1.8;padding-left:18px;">
+    <li><b>Dashboard</b> — an overview of your workflow library and quick links to everything else.</li>
+    <li><b>Testing &amp; QA / Code Review</b> — ready-made workflows for your specific use cases. Fill in a few fields, copy the result into Claude.</li>
+    <li><b>Prompt Builder</b> — assemble a one-off prompt from building blocks (role, objective, constraints, tone, etc.), with a live preview.</li>
+    <li><b>Loop Builder</b> — turn any prompt into an autonomous loop: Claude attempts the task, checks its own result against goals you set, and retries until it succeeds or hits a stop condition.</li>
+    <li><b>My Workflows</b> — anything you save, duplicate, or favorite. Stored only in this browser — use Export to back it up.</li>
+  </ul>`;
+}
+
+/* =========================================================
+   TOAST
+   ========================================================= */
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById("toast");
+  document.getElementById("toastMsg").textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove("show"), 2200);
+}
+
+/* =========================================================
+   THEME
+   ========================================================= */
+function applyTheme(){
+  const theme = loadJSON(LS_KEYS.theme, "dark");
+  document.documentElement.classList.toggle("light", theme==="light");
+  document.getElementById("themeLabel").textContent = theme==="light" ? "Light" : "Dark";
+  document.getElementById("themeIcon").innerHTML = theme==="light"
+    ? '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+    : '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';
+}
+function toggleTheme(){
+  const cur = loadJSON(LS_KEYS.theme, "dark");
+  saveJSON(LS_KEYS.theme, cur==="light" ? "dark" : "light");
+  applyTheme();
+}
+
+/* =========================================================
+   IMPORT / EXPORT
+   ========================================================= */
+function exportData(){
+  const data = { exportedAt: new Date().toISOString(), customWorkflows: state.custom, favorites: state.favorites };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "personal-ai-playbook-backup.json";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast("Backup file downloaded");
+}
+function importData(file){
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try{
+      const data = JSON.parse(e.target.result);
+      if(Array.isArray(data.customWorkflows)){
+        const existingIds = new Set(state.custom.map(w=>w.id));
+        data.customWorkflows.forEach(w=>{ if(!existingIds.has(w.id)){ w.custom = true; state.custom.push(w); } });
+        saveJSON(LS_KEYS.custom, state.custom);
+      }
+      if(Array.isArray(data.favorites)){
+        state.favorites = Array.from(new Set(state.favorites.concat(data.favorites)));
+        saveJSON(LS_KEYS.fav, state.favorites);
+      }
+      showToast("Backup imported successfully");
+      render();
+    }catch(err){ showToast("Couldn't read that file — is it a valid backup?"); }
+  };
+  reader.readAsText(file);
+}
+
+/* =========================================================
+   GLOBAL EVENTS
+   ========================================================= */
+document.getElementById("themeToggle").addEventListener("click", toggleTheme);
+document.getElementById("helpBtn").addEventListener("click", openHelp);
+document.getElementById("exportBtn").addEventListener("click", exportData);
+document.getElementById("importBtn").addEventListener("click", ()=> document.getElementById("importFile").click());
+document.getElementById("importFile").addEventListener("change", (e)=>{ if(e.target.files[0]) importData(e.target.files[0]); e.target.value=""; });
+document.getElementById("menuToggle").addEventListener("click", ()=> document.getElementById("sidebar").classList.toggle("open"));
+document.getElementById("detailOverlay").addEventListener("click", (e)=>{ if(e.target.id==="detailOverlay") closeDetail(); });
+document.getElementById("modalBg").addEventListener("click", (e)=>{ if(e.target.id==="modalBg") hideModal(); });
+
+const searchInput = document.getElementById("globalSearch");
+searchInput.addEventListener("input", ()=>{
+  state.search = searchInput.value;
+  if(!state.route.startsWith("wf-")) navigate("wf-testing");
+  else render();
+  searchInput.focus();
+});
+
+document.addEventListener("keydown", (e)=>{
+  const tag = (e.target.tagName||"").toLowerCase();
+  const typing = tag==="input" || tag==="textarea" || tag==="select";
+  if(e.key === "Escape"){ closeDetail(); hideModal(); return; }
+  if(typing) return;
+  if(e.key === "/" && !e.shiftKey){ e.preventDefault(); searchInput.focus(); }
+  else if(e.key === "?" || (e.key==="/" && e.shiftKey)){ e.preventDefault(); openHelp(); }
+  else if(e.key.toLowerCase() === "d"){ toggleTheme(); }
+  else if(e.key.toLowerCase() === "n"){ openWorkflowEditor(null); }
+});
+
+/* =========================================================
+   INIT
+   ========================================================= */
+applyTheme();
+render();
+if(!loadJSON(LS_KEYS.onboarded, false)){ setTimeout(openOnboarding, 400); }
+
+})();
+</script>
+</body>
+</html>
