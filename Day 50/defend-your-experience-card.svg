@@ -1,0 +1,77 @@
+<svg width="1200" height="1350" viewBox="0 0 1200 1350" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0c10"/>
+      <stop offset="100%" stop-color="#0d1015"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="1200" height="1350" fill="url(#bgGrad)"/>
+
+  <circle cx="1120" cy="90" r="150" fill="#f2b84b" opacity="0.05"/>
+  <circle cx="60" cy="1280" r="220" fill="#4fd1c5" opacity="0.05"/>
+
+  <text x="80" y="95" font-family="Menlo, Consolas, monospace" font-size="17" letter-spacing="2.5" fill="#f2b84b">// MOCK DEFENSE SESSION</text>
+
+  <text x="78" y="175" font-family="Georgia, 'Times New Roman', serif" font-size="58" font-weight="700" fill="#e9ebf1">Defending my experience</text>
+
+  <rect x="80" y="215" width="140" height="3" fill="#4fd1c5"/>
+
+  <circle cx="105" cy="290" r="34" fill="none" stroke="#f2b84b" stroke-width="2"/>
+  <text x="105" y="298" font-family="Menlo, Consolas, monospace" font-size="22" font-weight="700" fill="#f2b84b" text-anchor="middle">RS</text>
+  <text x="155" y="282" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#e9ebf1">Rudra Pratap Singh</text>
+  <text x="155" y="310" font-family="Arial, sans-serif" font-size="16" fill="#9aa1b3">Aspiring Data Analyst &#8226; Kanpur, India</text>
+
+  <text x="80" y="380" font-family="Menlo, Consolas, monospace" font-size="14" letter-spacing="1.5" fill="#5b6272">CLAIMS ON THE DOCKET</text>
+  <line x1="80" y1="398" x2="1120" y2="398" stroke="#1c212c" stroke-width="1"/>
+
+  <!-- Claim rows -->
+  <g font-family="Arial, sans-serif">
+    <!-- row 1 -->
+    <rect x="80" y="430" width="1040" height="98" rx="10" fill="#12151c" stroke="#1c212c"/>
+    <circle cx="115" cy="465" r="4" fill="#e5626a"/>
+    <text x="140" y="461" font-family="Menlo, Consolas, monospace" font-size="12" letter-spacing="1.5" fill="#f2b84b">01 &#183; TECHNICAL</text>
+    <text x="140" y="497" font-size="21" fill="#e9ebf1">EDA on 8,000+ Netflix titles across 10+ metadata fields,</text>
+    <text x="140" y="524" font-size="21" fill="#e9ebf1">trends over 20+ years</text>
+
+    <!-- row 2 -->
+    <rect x="80" y="546" width="1040" height="98" rx="10" fill="#12151c" stroke="#1c212c"/>
+    <circle cx="115" cy="581" r="4" fill="#f2b84b"/>
+    <text x="140" y="577" font-family="Menlo, Consolas, monospace" font-size="12" letter-spacing="1.5" fill="#f2b84b">02 &#183; IMPACT</text>
+    <text x="140" y="613" font-size="21" fill="#e9ebf1">5+ visualizations linking release timing with</text>
+    <text x="140" y="640" font-size="21" fill="#e9ebf1">audience engagement</text>
+
+    <!-- row 3 -->
+    <rect x="80" y="662" width="1040" height="98" rx="10" fill="#12151c" stroke="#1c212c"/>
+    <circle cx="115" cy="697" r="4" fill="#e5626a"/>
+    <text x="140" y="693" font-family="Menlo, Consolas, monospace" font-size="12" letter-spacing="1.5" fill="#f2b84b">03 &#183; TECHNICAL</text>
+    <text x="140" y="729" font-size="21" fill="#e9ebf1">Excel dashboard analyzing 400,000+ road</text>
+    <text x="140" y="756" font-size="21" fill="#e9ebf1">accident records</text>
+
+    <!-- row 4 -->
+    <rect x="80" y="778" width="1040" height="98" rx="10" fill="#12151c" stroke="#1c212c"/>
+    <circle cx="115" cy="813" r="4" fill="#f2b84b"/>
+    <text x="140" y="809" font-family="Menlo, Consolas, monospace" font-size="12" letter-spacing="1.5" fill="#f2b84b">04 &#183; PROBLEM-SOLVING</text>
+    <text x="140" y="845" font-size="21" fill="#e9ebf1">Urban areas show higher accident rates;</text>
+    <text x="140" y="872" font-size="21" fill="#e9ebf1">cars account for majority of casualties</text>
+
+    <!-- row 5 -->
+    <rect x="80" y="894" width="1040" height="98" rx="10" fill="#12151c" stroke="#1c212c"/>
+    <circle cx="115" cy="929" r="4" fill="#4fd1c5"/>
+    <text x="140" y="925" font-family="Menlo, Consolas, monospace" font-size="12" letter-spacing="1.5" fill="#f2b84b">05 &#183; TECHNICAL</text>
+    <text x="140" y="961" font-size="21" fill="#e9ebf1">Power BI weather dashboard with Power Query</text>
+    <text x="140" y="988" font-size="21" fill="#e9ebf1">relationships and DAX KPI cards</text>
+
+    <!-- row 6 -->
+    <rect x="80" y="1010" width="1040" height="98" rx="10" fill="#12151c" stroke="#1c212c"/>
+    <circle cx="115" cy="1045" r="4" fill="#f2b84b"/>
+    <text x="140" y="1041" font-family="Menlo, Consolas, monospace" font-size="12" letter-spacing="1.5" fill="#f2b84b">06 &#183; OWNERSHIP</text>
+    <text x="140" y="1077" font-size="21" fill="#e9ebf1">"Comfortable with first-principles problem</text>
+    <text x="140" y="1104" font-size="21" fill="#e9ebf1">solving, structured thinking"</text>
+  </g>
+
+  <line x1="80" y1="1150" x2="1120" y2="1150" stroke="#1c212c" stroke-width="1"/>
+  <text x="80" y="1195" font-family="Arial, sans-serif" font-size="17" fill="#9aa1b3">Practicing defending every claim before it faces a real interviewer.</text>
+  <text x="80" y="1245" font-family="Menlo, Consolas, monospace" font-size="14" letter-spacing="1" fill="#5b6272">#DataAnalytics #InterviewPrep #OpenToWork</text>
+
+  <text x="1120" y="1310" text-anchor="end" font-family="Menlo, Consolas, monospace" font-size="13" fill="#5b6272">defend-your-experience &#183; session 1</text>
+</svg>
